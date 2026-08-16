@@ -47,7 +47,7 @@ the workspace root.
 
 ### The one warning you will see
 
-```
+```text
 warning: the following packages contain code that will be rejected by a future
 version of Rust: proc-macro-error2 v2.0.1
 ```
