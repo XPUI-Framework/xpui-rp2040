@@ -1,0 +1,64 @@
+[package]
+name = "xpui-rp2040"
+description = "The xpui gallery as RP2040 firmware, for the Badger 2040 and the Tufty 2040"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+# `test`/`bench` off on every target: a test harness needs libtest, which does
+# not exist for `thumbv6m-none-eabi`, so leaving them on makes
+# `--all-targets` fail on the only target this crate compiles for. What is
+# testable here lives in xpui and in the gallery, both of which are tested on
+# the host.
+[lib]
+name = "xpui_rp2040"
+path = "src/lib.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "badger2040"
+path = "src/bin/badger2040.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "tufty2040"
+path = "src/bin/tufty2040.rs"
+test = false
+bench = false
+
+# Bare-metal ARM only, which is the only place this crate has anything to
+# compile. The workspace's gates build every member for the host they run on,
+# and an RP2040 HAL does not compile for a laptop — so behind this cfg the
+# dependencies are not even resolved there. `build.rs` turns on a matching
+# `device` cfg, and the source is gated to match, leaving an empty crate on the
+# host. Linting therefore happens by building for the target: see README.md.
+[target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
+xpui.workspace = true
+xpui-chrome.workspace = true
+xpui-embedded-graphics.workspace = true
+
+# The screens. Package `xpui-gallery`, library `gallery` — the same crate the
+# desktop simulator runs, with nothing device-specific in it.
+xpui-gallery = { path = "../gallery" }
+
+embedded-graphics = "0.8"
+
+# Embassy: the RP2040 HAL, a microsecond clock, and an executor to await on.
+embassy-executor = { version = "0.9.1", features = ["arch-cortex-m", "executor-thread"] }
+embassy-rp = { version = "0.8.0", features = ["critical-section-impl", "rp2040", "time-driver"] }
+embassy-time = "0.5.1"
+
+cortex-m = "0.7.7"
+cortex-m-rt = "0.7.5"
+# `llff` only: the default set also pulls in `tlsf`, which wants nightly.
+embedded-alloc = { version = "0.7.0", default-features = false, features = ["llff"] }
+debouncr = "0.2.2"
+
+# The panels.
+uc8151 = "0.2.0"   # Badger 2040, monochrome e-ink over SPI
+mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus

@@ -1,0 +1,18 @@
+# Cargo reads this file only when it is invoked from this directory or below,
+# so it changes nothing for the workspace root — which is what keeps the gates
+# there building this crate for the host, as they build every other member.
+#
+# From here, `cargo build` and `cargo run` target the board rather than the
+# laptop, and no `--target` flag is needed.
+
+[build]
+target = "thumbv6m-none-eabi" # Cortex-M0+
+
+[target.thumbv6m-none-eabi]
+# `cargo run --release --bin badger2040` with a debug probe attached: a
+# Raspberry Pi Debug Probe, or a second Pico running picoprobe.
+runner = "probe-rs run --chip RP2040 --protocol swd"
+# Without a probe, flash over USB instead — hold BOOTSEL while plugging the
+# board in, then swap the runner for the line below (or see README.md for the
+# two-step form that does not touch this file).
+# runner = "elf2uf2-rs --deploy"
