@@ -4,7 +4,7 @@
 //! `tufty2040` drives a 320x240 colour IPS panel through an ST7789v over an
 //! 8-bit parallel bus. Both flash the *same* screens — `gallery::Menu` and
 //! everything it opens, the crate the desktop simulator runs. What differs is
-//! a [`Board`](xpui_chrome::Board), a [`Palette`](xpui_eg::Palette), and which
+//! a [`Board`](xpui_boards::Board), a [`Palette`](xpui_eg::Palette), and which
 //! pin is wired to what.
 //!
 //! This crate supplies the three things a bare-metal host has to bring itself:

@@ -39,6 +39,7 @@ bench = false
 # host. Linting therefore happens by building for the target: see README.md.
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
 xpui.workspace = true
+xpui-boards.workspace = true
 xpui-chrome.workspace = true
 xpui-embedded-graphics.workspace = true
 

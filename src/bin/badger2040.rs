@@ -25,7 +25,7 @@ use {
     embassy_time::Delay,
     gallery::Menu,
     uc8151::{LUT, Uc8151},
-    xpui_chrome::Board,
+    xpui_boards::Board,
     xpui_eg::Palette,
     xpui_rp2040::{ButtonPins, Buttons, init_heap, run},
 };

@@ -9,7 +9,7 @@ use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::draw_target::DrawTarget;
 use xpui::App;
 use xpui::screen::Screen;
-use xpui_chrome::Board;
+use xpui_boards::Board;
 use xpui_eg::{Backend, Palette};
 
 use crate::Buttons;
