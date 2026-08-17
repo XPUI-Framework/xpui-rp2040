@@ -53,11 +53,19 @@ version of Rust: proc-macro-error2 v2.0.1
 ```
 
 Not ours, and not fixable here. It arrives four levels down —
-`embassy-rp` → `pio` → `pio-proc` → `proc-macro-error2` — and 2.0.1 is the
-newest published version, so there is nothing to upgrade to. It is a cargo
-future-incompatibility report about a dependency's own source, not a warning
-about this workspace, and it fails no gate. It goes away when `embassy-rp`
-moves off `pio-proc`.
+`embassy-rp` → `pio` → `pio-proc` → `proc-macro-error2` — where that crate
+re-exports `proc_macro` in a way
+[rust-lang/rust#127909](https://github.com/rust-lang/rust/issues/127909) is
+phasing out. 2.0.1 is the newest published version and still has it, so there is
+nothing to upgrade into.
+
+It is a cargo future-incompatibility report about a dependency's own source,
+not a warning about this workspace, and it fails no gate. It is also a
+**build-time** proc-macro running on your laptop: nothing it affects is
+compiled into what the board runs. It goes away when `proc-macro-error2`
+publishes a fix or `embassy-rp` moves off `pio-proc`; the only way to force it
+sooner is a `[patch]` onto a fork of somebody else's crate, which is a worse
+thing to own than a warning.
 
 ## Flash
 
@@ -134,10 +142,21 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 56 kB of 2 MB | 74 kB of 256 kB, 64 kB of it the heap |
-| `tufty2040` | 61 kB of 8 MB | 65 kB of 256 kB, 64 kB of it the heap |
+| `badger2040` | 200 kB of 2 MB | 74 kB of 256 kB, 64 kB of it the heap |
+| `tufty2040` | 206 kB of 8 MB | 65 kB of 256 kB, 64 kB of it the heap |
 
 The rest of RAM is the stack, which grows down from the top.
+
+**Most of that flash is type.** Around 100 kB of it is the two extra typefaces
+the gallery registers — Courier and Century — which are bitmaps in `.rodata`
+and cost nothing in RAM. They are reachable from nothing but
+`gallery::fonts::FAMILIES`, so shortening that list to `&[&HELVETICA]` drops
+them from the binary and halves it. Worth knowing before porting this to a part
+with less room; see [`examples/gallery/src/fonts.rs`](../gallery/src/fonts.rs)
+for the measured comparison.
+
+These are measured from the allocated sections of a release ELF, not from the
+file on disk — an ELF carries debug information the board never sees.
 
 ## Pins
 
