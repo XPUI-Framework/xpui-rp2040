@@ -31,13 +31,59 @@ const FRAME_INTERVAL: Duration = Duration::from_millis(10);
 /// buttons permanently unread. A display that draws straight through — the
 /// Tufty's, over its parallel bus — passes a closure that does nothing,
 /// because by then the pixels have already reached the glass.
+///
+/// **Both boards use this one**, because neither has an async flush to wait
+/// on: `mipidsi` writes straight through, and `uc8151`'s published release
+/// spins on the BUSY pin. Its `asynch` module exists on git and has never been
+/// published — the last release was 2023 — so moving the Badger to it would
+/// mean a git dependency and an `embedded-hal` 1.0 migration for a driver
+/// nobody has cut a release of since. [`run_async`] is there for when that
+/// changes, and for any DMA-backed panel today.
 pub async fn run<D, S>(
+    display: D,
+    board: Board,
+    palette: Palette<D::Color>,
+    buttons: Buttons,
+    root: S,
+    mut present: impl FnMut(&mut D),
+) -> !
+where
+    D: DrawTarget + Send + 'static,
+    D::Color: Sync,
+    S: Screen + 'static,
+{
+    // One loop, not two. The blocking present is an async one that never
+    // suspends.
+    //
+    // Not free: this change is +736 bytes on the Badger and +800 on the Tufty,
+    // measured against the commit before it. Most of that is the loan
+    // machinery rather than this wrapper — the two were not isolated — and on
+    // a 2 MB flash it buys one loop instead of two that would drift.
+    run_async(
+        display,
+        board,
+        palette,
+        buttons,
+        root,
+        async |display: &mut D| present(display),
+    )
+    .await
+}
+
+/// The same loop, for a panel whose flush suspends.
+///
+/// `present` is handed the display **itself**, not a borrow of the backend:
+/// the display leaves for the duration of the flush and the loan puts it back
+/// afterwards. That is the whole difference, and it is why an `await` is
+/// possible here at all — see [`Backend::loan_display`]. Anything that paints
+/// while the flush is in flight is discarded.
+pub async fn run_async<D, S>(
     display: D,
     board: Board,
     palette: Palette<D::Color>,
     mut buttons: Buttons,
     root: S,
-    mut present: impl FnMut(&mut D),
+    mut present: impl AsyncFnMut(&mut D),
 ) -> !
 where
     D: DrawTarget + Send + 'static,
@@ -63,7 +109,7 @@ where
     // that is not a blank screen — it is the previous firmware's last frame.
     app.render();
     backend.clear_dirty();
-    backend.with_display(&mut present);
+    flush(backend, &mut present).await;
 
     while app.is_running() {
         // Wrapping at 49 days is the framework's contract for a clock; what
@@ -74,7 +120,7 @@ where
         app.tick();
         if app.render_if_dirty() {
             backend.clear_dirty();
-            backend.with_display(&mut present);
+            flush(backend, &mut present).await;
         }
 
         Timer::after(FRAME_INTERVAL).await;
@@ -83,4 +129,21 @@ where
     // The root screen finished. A device has nowhere to return to, so stop and
     // leave the last frame where it can still be read.
     park()
+}
+
+/// Takes the display out, flushes it, and lets the loan put it back.
+///
+/// Nothing of the backend is borrowed across the `await`, which is the point:
+/// a DMA transfer or a BUSY-pin wait can be seconds long, and a borrow held
+/// that far is a second task finding the state already taken.
+async fn flush<D: DrawTarget>(backend: &Backend<D>, present: &mut impl AsyncFnMut(&mut D)) {
+    // `None` only if something else is already presenting, which this loop
+    // does not do — it awaits each flush before starting the next.
+    //
+    // **A firmware copying this into a two-task design does not get that for
+    // free.** There the `None` arm is a dropped frame with no signal, and it
+    // should log or retry rather than skip silently.
+    if let Some(mut display) = backend.loan_display() {
+        present(&mut display).await;
+    }
 }
