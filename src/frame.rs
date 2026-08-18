@@ -41,6 +41,13 @@ pub async fn run<D, S>(
 ) -> !
 where
     D: DrawTarget + Send + 'static,
+    // The backend is installed as a `Host`, which is `Sync`. With the
+    // `critical-section` feature that is worked out by the compiler rather
+    // than claimed by an `unsafe impl`, and the compiler then wants this: the
+    // palette is shared, and `PixelColor` does not require `Sync` even though
+    // every implementor is a plain `Copy` value. An honest bound, and one no
+    // real colour type fails.
+    D::Color: Sync,
     S: Screen + 'static,
 {
     // Sized from the board, so a screen developed in the simulator window and
