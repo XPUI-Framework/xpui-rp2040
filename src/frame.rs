@@ -7,6 +7,7 @@
 
 use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::draw_target::DrawTarget;
+use rtt_target::rprintln;
 use xpui::App;
 use xpui::screen::Screen;
 use xpui_boards::Board;
@@ -96,8 +97,22 @@ where
     D::Color: Sync,
     S: Screen + 'static,
 {
-    // Sized from the board, so a screen developed in the simulator window and
-    // the same screen here lay out against identical numbers.
+    // The board supplies the chrome and the type; the **panel** supplies the
+    // size, because `Backend::new` measures whatever it is handed. Those two
+    // agreeing is what makes "develop in a window, then flash it" true, and
+    // nothing enforces it — a driver configured a quarter turn out reports a
+    // size the simulator never laid out against. So it is said at boot, where
+    // a mismatch is one line rather than an afternoon.
+    let panel = display.bounding_box().size;
+    rprintln!(
+        "xpui: {} {}x{}, panel {}x{}",
+        board.name,
+        board.width,
+        board.height,
+        panel.width,
+        panel.height
+    );
+
     let backend = Backend::leak_for_board(display, board, palette);
     // Safety: one panel, one executor task, and nothing has rendered yet.
     unsafe { xpui::host::install(backend) };
@@ -110,6 +125,12 @@ where
     app.render();
     backend.clear_dirty();
     flush(backend, &mut present).await;
+    let (used, free) = crate::runtime::heap_used();
+    rprintln!(
+        "xpui: first frame up, heap {} of {} used",
+        used,
+        used + free
+    );
 
     while app.is_running() {
         // Wrapping at 49 days is the framework's contract for a clock; what
@@ -128,6 +149,7 @@ where
 
     // The root screen finished. A device has nowhere to return to, so stop and
     // leave the last frame where it can still be read.
+    rprintln!("xpui: root screen finished — parking, the board is now deaf");
     park()
 }
 

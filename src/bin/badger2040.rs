@@ -27,7 +27,7 @@ use {
     uc8151::{LUT, Uc8151},
     xpui_boards::Board,
     xpui_eg::Palette,
-    xpui_rp2040::{ButtonPins, Buttons, init_heap, run},
+    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
 };
 
 /// What Pimoroni's own driver clocks this panel at. It moves the 4,736-byte
@@ -39,7 +39,9 @@ const SPI_FREQUENCY: u32 = 12_000_000;
 #[cfg(device)]
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    // First, because `App::new` allocates on its first line.
+    // Before the heap, so a panic inside `init_heap` still has somewhere to go.
+    init_log();
+    // Second, because `App::new` allocates on its first line.
     init_heap();
 
     let p = embassy_rp::init(Default::default());

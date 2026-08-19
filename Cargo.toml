@@ -64,6 +64,13 @@ cortex-m-rt = "0.7.5"
 embedded-alloc = { version = "0.7.0", default-features = false, features = ["llff"] }
 debouncr = "0.2.2"
 
+# A way for a board to say what happened. `probe-rs run` — the runner
+# `.cargo/config.toml` names — attaches to the RTT block automatically, so a
+# panic message and the boot geometry arrive in the terminal that flashed the
+# firmware. Without it the panic handler parks silently and a dead board looks
+# exactly like an idle one, which cost a day of guessing at a photograph.
+rtt-target = "0.6"
+
 # The panels.
 uc8151 = "0.2.0"   # Badger 2040, monochrome e-ink over SPI
 mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus

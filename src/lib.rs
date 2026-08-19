@@ -43,4 +43,4 @@ pub use buttons::{ButtonPins, Buttons};
 #[cfg(device)]
 pub use frame::run;
 #[cfg(device)]
-pub use runtime::{init_heap, park};
+pub use runtime::{init_heap, init_log, park};

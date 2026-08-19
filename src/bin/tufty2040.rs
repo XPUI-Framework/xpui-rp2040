@@ -34,13 +34,15 @@ use {
     mipidsi::options::{ColorInversion, ColorOrder, Orientation, Rotation},
     xpui_boards::Board,
     xpui_eg::Palette,
-    xpui_rp2040::{ButtonPins, Buttons, init_heap, run},
+    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
 };
 
 #[cfg(device)]
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    // First, because `App::new` allocates on its first line.
+    // Before the heap, so a panic inside `init_heap` still has somewhere to go.
+    init_log();
+    // Second, because `App::new` allocates on its first line.
     init_heap();
 
     let p = embassy_rp::init(Default::default());

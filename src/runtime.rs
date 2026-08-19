@@ -1,4 +1,4 @@
-//! A heap, somewhere for a panic to go, and a way to stop.
+//! A heap, somewhere for a panic to go, a way to say why, and a way to stop.
 //!
 //! Nothing a hosted program would have to think about, and all of it required
 //! before the first line of UI code runs.
@@ -7,6 +7,7 @@ use core::mem::MaybeUninit;
 use core::panic::PanicInfo;
 
 use embedded_alloc::LlffHeap;
+use rtt_target::{rprintln, rtt_init_print};
 
 #[global_allocator]
 static HEAP: LlffHeap = LlffHeap::empty();
@@ -24,6 +25,27 @@ static HEAP: LlffHeap = LlffHeap::empty();
 /// either board to fall back on, and a first-fit allocator handed too little
 /// memory fragments long before it runs out.
 const HEAP_SIZE: usize = 64 * 1024;
+
+/// Opens the channel `probe-rs run` reads, so the board can be heard.
+///
+/// Before this, every line below is written into a ring buffer nobody is
+/// holding and dropped, which is also what happens when the firmware is
+/// running from flash with no probe attached — the cost of a line nobody reads
+/// is a memcpy into a buffer that never fills.
+///
+/// Call it first, so a panic in `init_heap` still has somewhere to go.
+pub fn init_log() {
+    rtt_init_print!();
+}
+
+/// What the allocator has handed out and what is left, in bytes.
+///
+/// The only view either board has of its own memory. A first-fit allocator
+/// with 64 kB fragments long before it runs out, so the interesting number is
+/// how `free` moves frame to frame, not what it is once.
+pub fn heap_used() -> (usize, usize) {
+    (HEAP.used(), HEAP.free())
+}
 
 /// Hands the allocator its memory. Call once, before anything allocates.
 ///
@@ -49,7 +71,15 @@ pub fn park() -> ! {
     }
 }
 
+/// Says what happened, then stops.
+///
+/// The message costs `core::fmt`, which the frame loop is kept clear of on
+/// purpose — but this path runs once and never again, and a board that dies
+/// without saying why is indistinguishable from one that is merely idle. That
+/// ambiguity is expensive: a half-drawn panel and a silent park look exactly
+/// like a layout bug from across a desk.
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    rprintln!("PANIC: {}", info);
     park()
 }
