@@ -136,7 +136,9 @@ where
         // Wrapping at 49 days is the framework's contract for a clock; what
         // reads it measures short intervals, not absolute time.
         backend.begin_frame(Instant::now().as_millis() as u32);
-        buttons.poll(backend);
+        // A root screen has nothing underneath it, so Back is withheld there
+        // rather than delivered and obeyed — see `Buttons::poll`.
+        buttons.poll(backend, app.depth() > 1);
 
         app.tick();
         if app.render_if_dirty() {

@@ -78,9 +78,24 @@ impl Buttons {
     /// Four agreeing samples make a state change, so at the frame interval the
     /// loop runs at a press settles in about 40 ms — long enough to swallow
     /// contact bounce, short enough not to be felt.
-    pub fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>) {
+    ///
+    /// `back_leads_somewhere` is the caller's answer to "is there a screen
+    /// underneath this one".
+    pub fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>, back_leads_somewhere: bool) {
         for key in &mut self.keys {
-            match key.debouncer.update(key.pin.is_high()) {
+            // Sampled first, and always: a key skipped here keeps a stale level,
+            // so the next press is not an edge and is swallowed.
+            let edge = key.debouncer.update(key.pin.is_high());
+
+            // A root screen has nowhere to go back to. `Button::Back` finishes
+            // the current screen, and finishing the last one empties the stack,
+            // ends the frame loop and parks the board — indistinguishable from a
+            // crash, because every other key stops answering too.
+            if key.button == Button::Back && !back_leads_somewhere {
+                continue;
+            }
+
+            match edge {
                 Some(Edge::Rising) => backend.press(key.button),
                 Some(Edge::Falling) => backend.release(key.button),
                 None => {}
