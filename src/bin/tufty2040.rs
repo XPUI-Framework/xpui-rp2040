@@ -32,8 +32,8 @@ use {
     mipidsi::models::ST7789,
     mipidsi::options::{ColorInversion, ColorOrder, Orientation, Rotation},
     xpui_boards::Board,
-    xpui_eg::Palette,
-    xpui_rp2040::{ButtonPins, Buttons, PacedFill, init_heap, init_log, run},
+    xpui_eg::{PacedFill, Palette},
+    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
 };
 
 #[embassy_executor::main]

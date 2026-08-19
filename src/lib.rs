@@ -18,10 +18,8 @@ extern crate alloc;
 
 mod buttons;
 mod frame;
-mod paced_fill;
 mod runtime;
 
 pub use buttons::{ButtonPins, Buttons};
 pub use frame::run;
-pub use paced_fill::PacedFill;
 pub use runtime::{init_heap, init_log, park};
