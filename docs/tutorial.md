@@ -216,13 +216,28 @@ Run both from [`examples/rp2040/`](../), whose `.cargo/config.toml` sets the
 target and the runner — from the workspace root you would be building for your
 laptop.
 
-## What has not been proven for you
+## What has been proven, and where
 
-**Neither firmware here has been run on a board.** Both link, and both lay out
-correctly for the RP2040 boot ROM — `.boot2` at `0x10000000`, vectors at
-`0x10000100`, `.data` with a flash LMA and a SRAM VMA — which is what
-`elf2uf2-rs` and `probe-rs` need. Correct linkage is not correct behaviour.
+Both boards here have been run over a debug probe. The firmware says what it
+found on the way up — board size against panel size, and the heap after the
+first frame — because a driver a quarter turn out lays out plausibly and puts
+the screen in a corner of the glass.
 
-Three pin decisions also differ deliberately from Pimoroni's reference code,
-each reasoned and none confirmed on hardware. [The README](../README.md) lists
-them, and each is a one-line change if your board disagrees.
+Three faults came out of that first run, and each is worth knowing before you
+meet it on your own board:
+
+- **A slow panel makes auto-repeat lie.** The loop is blind for the ~800 ms a
+  refresh takes, and the button still reads as down on the frame after. The
+  framework no longer credits a gap it could not see through — but if you write
+  your own loop, that is the trap.
+- **`Button::Back` on a root screen ends the app**, which on a device means the
+  loop exits and the board parks. [`src/buttons.rs`](../src/buttons.rs) does
+  not deliver it there.
+- **`mipidsi` shortens a run of one colour into a bare strobe loop** that
+  outruns an ST7789 over a parallel bus, and only black and white take that
+  path. [`src/paced_fill.rs`](../src/paced_fill.rs) is the wrapper that avoids
+  it, and the whole story is in its module docs.
+
+Three pin decisions still differ deliberately from Pimoroni's reference code,
+and [the README](../README.md) lists them. What has *not* been tried is battery
+operation: both boards have only been run over USB.

@@ -196,31 +196,42 @@ GP14–GP21 in order; backlight GP2, raised only after the first clear so the
 controller's power-on noise is never lit. GP27 is the battery-sense reference
 enable rather than a panel supply, and is left alone.
 
-## What has not been verified
+## What has and has not been run
 
-**Neither firmware has been run on a board.** Both link, and both lay out
-correctly for the RP2040 boot ROM — `.boot2` at `0x10000000`, the vector table
-at `0x10000100`, `.data` with a flash LMA and a SRAM VMA — which is what
-`elf2uf2-rs` and `probe-rs` need. Correct linkage is not correct behaviour.
+**Both boards have been run**, over a debug probe, and the firmware reports
+what it finds on the way up:
 
-Three pin decisions deliberately differ from Pimoroni's reference code. Each is
-reasoned, none is confirmed on hardware, and each is a one-line change if a
-board disagrees:
+```text
+xpui: Badger 2040 296x128, panel 296x128
+xpui: first frame up, heap 5308 of 65536 used
+```
 
-| Pin | Here | Reference | Why |
-|---|---|---|---|
-| Badger **GP10** | driven high for the firmware's lifetime | driven high at init, low to power down | On battery this pin *is* the 3V3 rail. The reference plausibly gets away with the difference because USB feeds the rail anyway. |
-| Tufty **GP27** | left alone | declared, never constructed | Pimoroni's `battery.py` shows it is the ADC reference-divider enable, driven *low* when idle — nothing to do with the LCD. |
-| Tufty **GP10** | driven low explicitly | declared, never driven | Chip select. The reference presumably relies on the RP2040's default pull-down. Explicit is safer, but unconfirmed. |
+A mismatch between those two sizes is a driver configured a quarter turn out,
+which lays out plausibly and puts the screen in a corner of the glass. It costs
+one line to say so and an afternoon to find otherwise.
 
-**Tufty orientation and colour inversion** — `display_size(240, 320)` with
-`Deg270` and `Inverted` — are copied from the reference. mipidsi reports
-320 × 240 after that rotation, which matches `Board::TUFTY_2040`, but that the
-image is the right way up is untested.
+`probe-rs run` needs `--rtt-scan-memory` to pick that channel up, and
+`.cargo/config.toml`'s runner does not pass it — so `cargo run` flashes and
+shows nothing. For the log, run the binary through `probe-rs` directly.
 
-**The 64 kB heap is reasoned, not measured.** The justification is in
-`src/runtime.rs`. Measure it before trusting it on a bigger screen set.
+Three faults came out of that first session and are fixed:
 
-If you flash one of these, the polarity is the first thing to check: an
-inverted panel means the `Palette` is the wrong way round, not that the
-firmware is broken. See `Palette::INK_IS_ON` / `INK_IS_OFF`.
+| | |
+|---|---|
+| Auto-repeat counted a panel refresh as a held key | one tap of Down walked the selection several rows. `Runtime` no longer credits a gap it could not see through |
+| `Back` on the root screen parked the board | it emptied the screen stack, ended the loop, and looked exactly like a crash. It is no longer delivered there |
+| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe without setting the data pins, at ~30 ns against a 66 ns minimum. Only black and white take it, which is ink and background — so fills came out as noise while text stayed crisp. See `src/paced_fill.rs` |
+
+Still unverified:
+
+- **The heap figure is now measured, not reasoned** — 5,308 bytes on the Badger
+  and 592 on the Tufty, of 65,536. The reasoning in `src/runtime.rs` was an
+  order of magnitude conservative, which is the right direction to be wrong in.
+- **Battery operation.** Both boards have been run over USB only. The Badger's
+  GP10 3V3 enable is held high for the firmware's lifetime, which matters only
+  on battery and has not been tried there.
+- **Anything about the Tufty's colour rendering** beyond ink and background.
+  The framework paints in two colours and the panel does 65,536.
+
+If a panel comes up inverted, the `Palette` is the wrong way round rather than
+the firmware being broken. See `Palette::INK_IS_ON` / `INK_IS_OFF`.
