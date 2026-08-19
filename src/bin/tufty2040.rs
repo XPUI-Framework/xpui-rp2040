@@ -34,7 +34,7 @@ use {
     mipidsi::options::{ColorInversion, ColorOrder, Orientation, Rotation},
     xpui_boards::Board,
     xpui_eg::Palette,
-    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
+    xpui_rp2040::{ButtonPins, Buttons, PacedFill, init_heap, init_log, run},
 };
 
 #[cfg(device)]
@@ -92,12 +92,17 @@ async fn main(_spawner: Spawner) {
     // infallible, which leaves `InitError` with no inhabited variant, so the
     // pattern is irrefutable. Should a future mipidsi give it one, this stops
     // compiling instead of silently swallowing a failure.
-    let Ok(mut display) = Builder::new(ST7789, interface)
+    let Ok(display) = Builder::new(ST7789, interface)
         .display_size(240, 320)
         .orientation(Orientation::new().rotate(Rotation::Deg270))
         .color_order(ColorOrder::Rgb)
         .invert_colors(ColorInversion::Inverted)
         .init(&mut Delay);
+
+    // Wrapped before anything is drawn through it. `mipidsi` shortens a run of
+    // one colour into a bare strobe loop that outruns this controller, and on
+    // this palette that is every fill and every clear — see [`PacedFill`].
+    let mut display = PacedFill::new(display);
 
     // Cleared before the backlight comes on. The controller's RAM holds
     // whatever survived reset, and lighting that shows a frame of noise.

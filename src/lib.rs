@@ -36,11 +36,15 @@ mod buttons;
 #[cfg(device)]
 mod frame;
 #[cfg(device)]
+mod paced_fill;
+#[cfg(device)]
 mod runtime;
 
 #[cfg(device)]
 pub use buttons::{ButtonPins, Buttons};
 #[cfg(device)]
 pub use frame::run;
+#[cfg(device)]
+pub use paced_fill::PacedFill;
 #[cfg(device)]
 pub use runtime::{init_heap, init_log, park};
