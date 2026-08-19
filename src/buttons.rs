@@ -13,26 +13,33 @@ use xpui_eg::Backend;
 
 /// The five switches, by the label silk-screened beside them.
 ///
+/// `a`, `b` and `c` rather than left, centre and right: that is what is printed
+/// on both boards, it is what the person pressing one reads, and it keeps the
+/// row clear of [`Button::Right`], which is a direction and not a switch.
+///
 /// Named fields rather than five positional arguments: they are all the same
 /// type, so a firmware that swaps two of them compiles cleanly and then
 /// behaves wrongly on hardware, which is the worst place to discover it.
 pub struct ButtonPins {
-    pub left: Input<'static>,
-    pub centre: Input<'static>,
-    pub right: Input<'static>,
+    pub a: Input<'static>,
+    pub b: Input<'static>,
+    pub c: Input<'static>,
     pub up: Input<'static>,
     pub down: Input<'static>,
 }
 
 /// One switch, debounced, and what it means.
+///
+/// `button` is optional because a board can have a key with nothing on it —
+/// see [`Buttons::new`]. Such a key is still sampled, never reported.
 struct Key {
     pin: Input<'static>,
     debouncer: DebouncerStateful<u8, Repeat4>,
-    button: Button,
+    button: Option<Button>,
 }
 
 impl Key {
-    fn new(pin: Input<'static>, button: Button) -> Self {
+    fn new(pin: Input<'static>, button: Option<Button>) -> Self {
         Key {
             pin,
             // Nothing is held at boot. Claiming otherwise would make the first
@@ -51,22 +58,47 @@ pub struct Buttons {
 impl Buttons {
     /// Maps the five switches onto logical buttons.
     ///
-    /// By meaning, never by position — that is the framework's own contract, and
-    /// it is why a screen can ask for `Confirm` without knowing there are five
-    /// buttons rather than a touchscreen. Centre confirms and left goes back,
-    /// which is where a thumb expects them on a badge held in one hand. Right
-    /// stays `Right` rather than becoming a second confirm, so a stepper and a
-    /// slider have something to increment with.
+    /// By meaning, never by position — that is the framework's own contract,
+    /// and it is why a screen can ask for `Confirm` without knowing there are
+    /// five buttons rather than a touchscreen.
+    ///
+    /// **A goes back and B confirms**, which is the order the framework's own
+    /// row has always been in — `Tokens::standard_hints` is `["Back", "OK",
+    /// …]`, and every reader puts Back on the leftmost key of its bottom row.
+    /// A person moving between a reader and one of these boards presses the
+    /// same relative position for the same thing, and the hint bar above the
+    /// keys says so.
+    ///
+    /// **C has nothing on it.** There is no useful third direction: `Right`
+    /// without a `Left` is a value that can be raised and never lowered, and
+    /// walking the list is what the up/down pair is for. Rather than give it a
+    /// job it does badly, it is left alone — [`Buttons::with_c`] assigns it in
+    /// one line when there is something worth putting there, and
+    /// `Board::BADGER_2040`'s row carries the matching `RowKey::Unassigned` so
+    /// the hint bar leaves its slot blank.
     pub fn new(pins: ButtonPins) -> Self {
         Buttons {
             keys: [
-                Key::new(pins.left, Button::Back),
-                Key::new(pins.centre, Button::Confirm),
-                Key::new(pins.right, Button::Right),
-                Key::new(pins.up, Button::Up),
-                Key::new(pins.down, Button::Down),
+                Key::new(pins.a, Some(Button::Back)),
+                Key::new(pins.b, Some(Button::Confirm)),
+                Key::new(pins.c, None),
+                Key::new(pins.up, Some(Button::Up)),
+                Key::new(pins.down, Some(Button::Down)),
             ],
         }
+    }
+
+    /// Gives the third key a meaning.
+    ///
+    /// ```text
+    /// let buttons = Buttons::new(pins).with_c(Button::Down);
+    /// ```
+    ///
+    /// Change the board's row to match — `RowKey::Unassigned` becomes whatever
+    /// this is — or the key will work while its hint slot stays blank.
+    pub fn with_c(mut self, button: Button) -> Self {
+        self.keys[2].button = Some(button);
+        self
     }
 
     /// Samples every switch once, and reports only what changed.
@@ -80,24 +112,33 @@ impl Buttons {
     /// contact bounce, short enough not to be felt.
     ///
     /// `back_leads_somewhere` is the caller's answer to "is there a screen
-    /// underneath this one".
+    /// underneath this one". See the note on [`Buttons::poll`]'s use in
+    /// `frame.rs`: on a device the answer decides whether Back is a key at all.
     pub fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>, back_leads_somewhere: bool) {
         for key in &mut self.keys {
-            // Sampled first, and always: a key skipped here keeps a stale level,
-            // so the next press is not an edge and is swallowed.
+            // **Sampled first, and always.** A key that is skipped leaves its
+            // debouncer holding a stale level, so the first press after it
+            // becomes deliverable is not an edge and is swallowed — a fault
+            // that would surface months later, when someone assigns C, and
+            // look like a dead switch.
             let edge = key.debouncer.update(key.pin.is_high());
 
-            // A root screen has nowhere to go back to. `Button::Back` finishes
-            // the current screen, and finishing the last one empties the stack,
-            // ends the frame loop and parks the board — indistinguishable from a
-            // crash, because every other key stops answering too.
-            if key.button == Button::Back && !back_leads_somewhere {
+            let Some(button) = key.button else { continue };
+
+            // A root screen on a board has nowhere to go back to. `Button::Back`
+            // finishes the current screen, and finishing the *last* one empties
+            // the stack, ends the frame loop and parks the board — which from
+            // the outside is indistinguishable from a firmware that crashed,
+            // because every other key stops answering too. A phone can afford
+            // that key because something owns the screen underneath it; here
+            // nothing does, so the press is simply not delivered.
+            if button == Button::Back && !back_leads_somewhere {
                 continue;
             }
 
             match edge {
-                Some(Edge::Rising) => backend.press(key.button),
-                Some(Edge::Falling) => backend.release(key.button),
+                Some(Edge::Rising) => backend.press(button),
+                Some(Edge::Falling) => backend.release(button),
                 None => {}
             }
         }

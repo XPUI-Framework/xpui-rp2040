@@ -97,11 +97,33 @@ Five buttons, mapped by meaning rather than by position:
 
 | Button | Badger | Tufty | Does |
 |---|---|---|---|
-| B / centre | GP13 | GP8 | `Confirm` — opens a row, commits a dialog |
-| A / left | GP12 | GP7 | `Back` |
-| C / right | GP14 | GP9 | `Right` — increments a stepper or a slider |
+| A | GP12 | GP7 | `Back` — **ignored on the root screen**, see below |
+| B | GP13 | GP8 | `Confirm` — opens a row, commits a dialog |
+| C | GP14 | GP9 | nothing, by default |
 | Up | GP15 | GP22 | `Up` |
 | Down | GP11 | GP6 | `Down` |
+
+A goes back and B confirms, which is the order the framework's own row has
+always been in — `Tokens::standard_hints` is `["Back", "OK", …]`, and every
+reader puts Back on the leftmost key of its bottom row. The hint bar above the
+keys says the same thing, because it is painted from the board's own row.
+
+**C has nothing on it.** `Right` without a `Left` is a value you can raise and
+never lower, and walking a list is what the up/down pair is for. Give it a job
+in one line when there is one worth doing:
+
+```text
+let buttons = Buttons::new(pins).with_c(Button::Down);
+```
+
+and change that board's `RowKey::Unassigned` to match, or the key works while
+its hint slot stays blank.
+
+**Back is not delivered on the root screen.** `Button::Back` finishes the
+current screen, and finishing the last one empties the stack, ends the frame
+loop and parks the board — which from the outside is indistinguishable from a
+crash, because every other key stops answering too. A phone can afford that key
+because something owns the screen underneath; here nothing does.
 
 Each is debounced over four samples of a 10 ms loop and reported as an *edge*,
 because `xpui`'s input is edge-based: a button reported as held on every frame

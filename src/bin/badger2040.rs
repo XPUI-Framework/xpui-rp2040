@@ -9,7 +9,7 @@
 //!
 //! | | |
 //! |---|---|
-//! | Buttons | down GP11, A/left GP12, B/centre GP13, C/right GP14, up GP15 |
+//! | Buttons | A GP12, B GP13, C GP14, up GP15, down GP11 |
 //! | SPI0 | clock GP18, data GP19 — the panel is write-only, so MISO is unused |
 //! | Panel | chip select GP17, data/command GP20, reset GP21, busy GP26 |
 //! | Board | 3V3 enable GP10, LED GP25 |
@@ -52,9 +52,9 @@ async fn main(_spawner: Spawner) {
     let _power = Output::new(p.PIN_10, Level::High);
 
     let buttons = Buttons::new(ButtonPins {
-        left: Input::new(p.PIN_12, Pull::Down),
-        centre: Input::new(p.PIN_13, Pull::Down),
-        right: Input::new(p.PIN_14, Pull::Down),
+        a: Input::new(p.PIN_12, Pull::Down),
+        b: Input::new(p.PIN_13, Pull::Down),
+        c: Input::new(p.PIN_14, Pull::Down),
         up: Input::new(p.PIN_15, Pull::Down),
         down: Input::new(p.PIN_11, Pull::Down),
     });

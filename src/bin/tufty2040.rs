@@ -9,7 +9,7 @@
 //!
 //! | | |
 //! |---|---|
-//! | Buttons | down GP6, A/left GP7, B/centre GP8, C/right GP9, up GP22 |
+//! | Buttons | A GP7, B GP8, C GP9, up GP22, down GP6 |
 //! | Panel | chip select GP10, data/command GP11, write GP12, read GP13 |
 //! | Data bus | DB0–DB7 on GP14–GP21, in order |
 //! | Board | backlight GP2, LED GP25 |
@@ -48,9 +48,9 @@ async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
     let buttons = Buttons::new(ButtonPins {
-        left: Input::new(p.PIN_7, Pull::Down),
-        centre: Input::new(p.PIN_8, Pull::Down),
-        right: Input::new(p.PIN_9, Pull::Down),
+        a: Input::new(p.PIN_7, Pull::Down),
+        b: Input::new(p.PIN_8, Pull::Down),
+        c: Input::new(p.PIN_9, Pull::Down),
         up: Input::new(p.PIN_22, Pull::Down),
         down: Input::new(p.PIN_6, Pull::Down),
     });
