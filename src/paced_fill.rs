@@ -30,7 +30,9 @@
 //! behind — cheap for a fill that is correct.
 //!
 //! Wanted only by a parallel bus. An SPI panel clocks its own bytes out and a
-//! framebuffer has no timing at all, so neither is wrapped.
+//! framebuffer has no timing at all, so neither is wrapped — this is opt-in,
+//! and a target that does not need it should not pay for it.
+//!
 
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::geometry::Dimensions;

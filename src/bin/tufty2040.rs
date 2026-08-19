@@ -17,10 +17,9 @@
 //! GP27 is the battery-sense reference enable, not a panel supply — Pimoroni's
 //! own examples raise it only while reading the ADC — so it is left alone.
 
-#![cfg_attr(device, no_std)]
-#![cfg_attr(device, no_main)]
+#![no_std]
+#![no_main]
 
-#[cfg(device)]
 use {
     embassy_executor::Spawner,
     embassy_rp::gpio::{Input, Level, Output, Pull},
@@ -37,7 +36,6 @@ use {
     xpui_rp2040::{ButtonPins, Buttons, PacedFill, init_heap, init_log, run},
 };
 
-#[cfg(device)]
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     // Before the heap, so a panic inside `init_heap` still has somewhere to go.
@@ -125,7 +123,3 @@ async fn main(_spawner: Spawner) {
     )
     .await
 }
-
-/// Off the device this file is an empty binary; see the crate documentation.
-#[cfg(not(device))]
-fn main() {}

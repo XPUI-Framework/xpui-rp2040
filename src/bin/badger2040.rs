@@ -14,10 +14,9 @@
 //! | Panel | chip select GP17, data/command GP20, reset GP21, busy GP26 |
 //! | Board | 3V3 enable GP10, LED GP25 |
 
-#![cfg_attr(device, no_std)]
-#![cfg_attr(device, no_main)]
+#![no_std]
+#![no_main]
 
-#[cfg(device)]
 use {
     embassy_executor::Spawner,
     embassy_rp::gpio::{Input, Level, Output, Pull},
@@ -33,10 +32,8 @@ use {
 /// What Pimoroni's own driver clocks this panel at. It moves the 4,736-byte
 /// framebuffer in about 3 ms, which is nothing beside the refresh that follows
 /// — the bus is not the thing to tune here.
-#[cfg(device)]
 const SPI_FREQUENCY: u32 = 12_000_000;
 
-#[cfg(device)]
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     // Before the heap, so a panic inside `init_heap` still has somewhere to go.
@@ -96,7 +93,3 @@ async fn main(_spawner: Spawner) {
     )
     .await
 }
-
-/// Off the device this file is an empty binary; see the crate documentation.
-#[cfg(not(device))]
-fn main() {}

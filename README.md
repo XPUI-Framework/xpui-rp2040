@@ -134,22 +134,39 @@ UC8151 refreshing, not the firmware thinking — `LUT::Fast` is already the
 quickest waveform that leaves text crisp, and the loop only repaints when
 `App::render_if_dirty` says something changed.
 
-## Why this crate builds for the host as an empty one
+## Its own workspace
 
-The workspace's gates — `cargo clippy --workspace`, `cargo test --workspace` —
-build *every* member for the machine they run on, and an RP2040 HAL does not
-compile for a laptop. So the dependencies here sit behind
-`[target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]`,
-`build.rs` sets a matching `device` cfg, and every item in `src/` is gated on
-it. Off the device this crate is empty, and the host gates pass with it as a
-full member rather than an excluded directory nobody builds.
+This crate is **excluded** from the repository's workspace, and that is what
+makes it ordinary code you can open and read.
 
-The cost is that `cargo clippy --workspace` never lints this code. Lint it by
-building it for the target it is for, which is the only place it exists:
+A workspace member is built for the host by `cargo clippy --workspace` and
+`cargo test --workspace`, and an RP2040 HAL does not compile for a laptop. The
+way out used to be a `device` cfg every item sat behind, so that off the board
+the crate was empty — which also meant no test could reach it and an editor
+showed nothing. Three mutations to the button mapping at once passed every
+check in the repository.
+
+Standing alone, its dependencies are unconditional and there is no cfg to
+reason about. Point an editor at this directory and it works.
+
+The cost is a lock file and a `target/` of its own, and that `-p xpui-rp2040`
+no longer reaches it from the repository root. Everything the gate does to it
+is by manifest path:
 
 ```bash
-cargo clippy --release -p xpui-rp2040 --all-targets --target thumbv6m-none-eabi -- -D warnings
+cargo fmt --check --manifest-path examples/rp2040/Cargo.toml
+cargo clippy --release --manifest-path examples/rp2040/Cargo.toml \
+  --all-targets --target thumbv6m-none-eabi -- -D warnings
 ```
+
+`./build-and-test.sh` runs both. Breaking the firmware on purpose fails it —
+that is checked, not assumed.
+
+**Tests still do not run here**: a test harness needs libtest, which does not
+exist for `thumbv6m-none-eabi`. What is testable belongs in a crate that
+compiles for the host — which is why `PacedFill` now lives in
+`xpui-embedded-graphics`, where a fake `DrawTarget` proves the one property it
+exists for.
 
 ## Memory
 
@@ -210,9 +227,11 @@ A mismatch between those two sizes is a driver configured a quarter turn out,
 which lays out plausibly and puts the screen in a corner of the glass. It costs
 one line to say so and an afternoon to find otherwise.
 
-`probe-rs run` needs `--rtt-scan-memory` to pick that channel up, and
-`.cargo/config.toml`'s runner does not pass it — so `cargo run` flashes and
-shows nothing. For the log, run the binary through `probe-rs` directly.
+`cargo run --release --bin badger2040` shows it, with no extra flag. That took
+a fix: `probe-rs` finds the RTT control block by looking its symbol up in the
+ELF, and the release profile used to `strip` the whole symbol table, so the log
+never appeared and the board looked like it had printed nothing. The profile
+now strips debug info and keeps the symbols.
 
 Three faults came out of that first session and are fixed:
 

@@ -12,39 +12,16 @@
 //! GPIO edges into [`xpui::Button`] presses and repaints only when the
 //! framework asks it to.
 //!
-//! # Off the device
-//!
-//! Every item here is behind `cfg(device)`, which `build.rs` turns on only for
-//! bare-metal ARM. The workspace's host gates build every member for the
-//! machine they run on, and an RP2040 HAL does not compile there — so off the
-//! device this crate is empty and its dependencies are never resolved.
-//!
-//! The consequence is that `cargo clippy --workspace` does not see any of this
-//! code. Lint it by building it for the target it is for:
-//!
-//! ```bash
-//! cargo clippy --release -p xpui-rp2040 --all-targets --target thumbv6m-none-eabi -- -D warnings
-//! ```
+#![no_std]
 
-#![cfg_attr(device, no_std)]
-
-#[cfg(device)]
 extern crate alloc;
 
-#[cfg(device)]
 mod buttons;
-#[cfg(device)]
 mod frame;
-#[cfg(device)]
 mod paced_fill;
-#[cfg(device)]
 mod runtime;
 
-#[cfg(device)]
 pub use buttons::{ButtonPins, Buttons};
-#[cfg(device)]
 pub use frame::run;
-#[cfg(device)]
 pub use paced_fill::PacedFill;
-#[cfg(device)]
 pub use runtime::{init_heap, init_log, park};

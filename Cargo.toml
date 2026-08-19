@@ -1,11 +1,17 @@
+# Its own workspace, deliberately. See `exclude` in the repository root's
+# Cargo.toml: membership is what forced every item in this crate behind a cfg,
+# and the cfg is what made it untestable and unreadable. The cost of standing
+# alone is this duplicated metadata and a second lock file.
+[workspace]
+
 [package]
 name = "xpui-rp2040"
 description = "The xpui gallery as RP2040 firmware, for the Badger 2040 and the Tufty 2040"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Thiago Holanda <unnamedd@gmail.com>"]
+repository = "https://github.com/unnamedd/xpui-framework"
 publish = false
 
 # `test`/`bench` off on every target: a test harness needs libtest, which does
@@ -31,21 +37,19 @@ path = "src/bin/tufty2040.rs"
 test = false
 bench = false
 
-# Bare-metal ARM only, which is the only place this crate has anything to
-# compile. The workspace's gates build every member for the host they run on,
-# and an RP2040 HAL does not compile for a laptop — so behind this cfg the
-# dependencies are not even resolved there. `build.rs` turns on a matching
-# `device` cfg, and the source is gated to match, leaving an empty crate on the
-# host. Linting therefore happens by building for the target: see README.md.
-[target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
-xpui.workspace = true
-xpui-boards.workspace = true
-xpui-chrome.workspace = true
+# Unconditional, because nothing here builds for a laptop and nothing asks it
+# to. `.cargo/config.toml` sets the target; there is no host build to satisfy.
+[dependencies]
+xpui = { path = "../../crates/xpui" }
+xpui-boards = { path = "../../crates/boards" }
+xpui-chrome = { path = "../../crates/backend/chrome" }
 # `critical-section` on, because this is a device: an interrupt handler could
 # plausibly reach the backend, and on the panel that costs a brief interrupt
 # mask rather than aliasing `&mut D`. The implementation comes from
 # `embassy-rp` below — the backend depends on the API only, as a library must.
-xpui-embedded-graphics = { workspace = true, features = ["critical-section"] }
+xpui-embedded-graphics = { path = "../../crates/backend/embedded_graphics", features = [
+    "critical-section",
+] }
 
 # The screens. Package `xpui-gallery`, library `gallery` — the same crate the
 # desktop simulator runs, with nothing device-specific in it.
@@ -65,12 +69,26 @@ embedded-alloc = { version = "0.7.0", default-features = false, features = ["llf
 debouncr = "0.2.2"
 
 # A way for a board to say what happened. `probe-rs run` — the runner
-# `.cargo/config.toml` names — attaches to the RTT block automatically, so a
-# panic message and the boot geometry arrive in the terminal that flashed the
-# firmware. Without it the panic handler parks silently and a dead board looks
-# exactly like an idle one, which cost a day of guessing at a photograph.
+# `.cargo/config.toml` names — picks the channel up and prints it in the
+# terminal that flashed the firmware, which needs the symbol table the profile
+# below keeps. Without any of this the panic handler parks silently and a dead
+# board looks exactly like an idle one, which cost a day of guessing at a
+# photograph.
 rtt-target = "0.6"
 
 # The panels.
 uc8151 = "0.2.0"   # Badger 2040, monochrome e-ink over SPI
 mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
+
+# Inherited from the workspace root until this crate stood alone.
+#
+# `strip = "debuginfo"` rather than `true`: `probe-rs run` locates the RTT
+# control block by looking its symbol up in the ELF, and `strip = true` deletes
+# the whole symbol table, so the boot log never appears and the failure looks
+# like a firmware that printed nothing. DWARF still goes.
+[profile.release]
+panic = "abort"
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = "debuginfo"
