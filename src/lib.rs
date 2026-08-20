@@ -11,7 +11,7 @@
 //! a heap, somewhere for a panic to go, and the loop in [`run`] that turns
 //! GPIO edges into [`xpui::Button`] presses and repaints only when the
 //! framework asks it to.
-//!
+
 #![no_std]
 
 extern crate alloc;

@@ -213,8 +213,8 @@ Fenced `text`: these move a binary onto hardware, which is not something a test
 can do.
 
 Run both from [`examples/rp2040/`](../), whose `.cargo/config.toml` sets the
-target and the runner — from the workspace root you would be building for your
-laptop.
+target and the runner. This crate is its own workspace, so from the repository
+root `cargo build` does not reach it at all — use `--manifest-path`.
 
 ## What has been proven, and where
 
@@ -235,8 +235,8 @@ meet it on your own board:
   not deliver it there.
 - **`mipidsi` shortens a run of one colour into a bare strobe loop** that
   outruns an ST7789 over a parallel bus, and only black and white take that
-  path. [`src/paced_fill.rs`](../src/paced_fill.rs) is the wrapper that avoids
-  it, and the whole story is in its module docs.
+  path. `PacedFill` in `xpui-embedded-graphics` is the wrapper that avoids it, and
+  the whole story is in its module docs.
 
 Three pin decisions still differ deliberately from Pimoroni's reference code,
 and [the README](../README.md) lists them. What has *not* been tried is battery

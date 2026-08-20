@@ -1,9 +1,10 @@
 # Cargo reads this file only when it is invoked from this directory or below,
-# so it changes nothing for the workspace root — which is what keeps the gates
-# there building this crate for the host, as they build every other member.
+# so `cargo build` and `cargo run` here target the board and need no `--target`
+# flag.
 #
-# From here, `cargo build` and `cargo run` target the board rather than the
-# laptop, and no `--target` flag is needed.
+# From the repository root there is nothing to read it: this crate is excluded
+# from that workspace, so a build there does not reach it at all. The gate uses
+# `--manifest-path` and names the target itself.
 
 [build]
 target = "thumbv6m-none-eabi" # Cortex-M0+

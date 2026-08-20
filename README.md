@@ -29,11 +29,13 @@ screens are not touched.
 
 ## Build
 
-From the workspace root:
+From the repository root, by manifest path:
 
 ```bash
-cargo build --release -p xpui-rp2040 --bin badger2040 --target thumbv6m-none-eabi
-cargo build --release -p xpui-rp2040 --bin tufty2040  --target thumbv6m-none-eabi
+cargo build --release --manifest-path examples/rp2040/Cargo.toml \
+  --bin badger2040 --target thumbv6m-none-eabi
+cargo build --release --manifest-path examples/rp2040/Cargo.toml \
+  --bin tufty2040 --target thumbv6m-none-eabi
 ```
 
 Or from this directory, where `.cargo/config.toml` already sets the target:
@@ -42,8 +44,9 @@ Or from this directory, where `.cargo/config.toml` already sets the target:
 cargo build --release --bin badger2040
 ```
 
-Either way the ELF lands in `target/thumbv6m-none-eabi/release/`, relative to
-the workspace root.
+Either way the ELF lands in `examples/rp2040/target/thumbv6m-none-eabi/release/`.
+This crate is its own workspace, so it has a `target/` of its own — see
+[its own workspace](#its-own-workspace).
 
 ### The one warning you will see
 
@@ -74,7 +77,7 @@ drive to appear, then:
 
 ```bash
 cargo install elf2uf2-rs
-elf2uf2-rs -d target/thumbv6m-none-eabi/release/badger2040
+elf2uf2-rs -d examples/rp2040/target/thumbv6m-none-eabi/release/badger2040
 ```
 
 `-d` converts and copies in one step; the board reboots into the firmware by
@@ -87,9 +90,10 @@ cargo install probe-rs-tools
 cargo run --release --bin badger2040
 ```
 
-`.cargo/config.toml` points the runner at `probe-rs run --chip RP2040`. The
-workspace release profile strips symbols, so a probe session shows addresses
-rather than names — build without `--release` if you need to read a backtrace.
+`.cargo/config.toml` points the runner at `probe-rs run --chip RP2040`. This
+crate's release profile keeps the symbol table — see the note on it in
+`Cargo.toml` — so a probe session shows names, and the RTT log arrives without
+any extra flag.
 
 ## Using it
 
@@ -239,7 +243,7 @@ Three faults came out of that first session and are fixed:
 |---|---|
 | Auto-repeat counted a panel refresh as a held key | one tap of Down walked the selection several rows. `Runtime` no longer credits a gap it could not see through |
 | `Back` on the root screen parked the board | it emptied the screen stack, ended the loop, and looked exactly like a crash. It is no longer delivered there |
-| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe without setting the data pins, at ~30 ns against a 66 ns minimum. Only black and white take it, which is ink and background — so fills came out as noise while text stayed crisp. See `src/paced_fill.rs` |
+| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe without setting the data pins, at ~30 ns against a 66 ns minimum. Only black and white take it, which is ink and background — so fills came out as noise while text stayed crisp. See `PacedFill` in `xpui-embedded-graphics` |
 
 Still unverified:
 

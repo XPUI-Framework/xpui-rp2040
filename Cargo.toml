@@ -86,6 +86,11 @@ mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
 # control block by looking its symbol up in the ELF, and `strip = true` deletes
 # the whole symbol table, so the boot log never appears and the failure looks
 # like a firmware that printed nothing. DWARF still goes.
+#
+# It costs **nothing on the part**. The symbol table is in no loadable segment,
+# so what is flashed is byte-identical either way: 223,972 bytes on the Badger
+# and 229,716 on the Tufty, measured both ways. The ELF on disk grows by about
+# 100 kB, which is host disk and not flash.
 [profile.release]
 panic = "abort"
 opt-level = "z"
