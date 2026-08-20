@@ -105,29 +105,35 @@ any extra flag.
 
 Five buttons, mapped by meaning rather than by position:
 
-| Button | Badger | Tufty | Does |
+| Key | Badger | Tufty | The board says it sends |
 |---|---|---|---|
-| A | GP12 | GP7 | `Back` — **ignored on the root screen**, see below |
-| B | GP13 | GP8 | `Confirm` — opens a row, commits a dialog |
-| C | GP14 | GP9 | nothing, by default |
-| Up | GP15 | GP22 | `Up` |
-| Down | GP11 | GP6 | `Down` |
+| `a` | GP12 | GP7 | `Back` — **ignored on the root screen**, see below |
+| `b` | GP13 | GP8 | `Confirm` — opens a row, commits a dialog |
+| `c` | GP14 | GP9 | nothing |
+| `Up` | GP15 | GP22 | `Up` |
+| `Dn` | GP11 | GP6 | `Down` |
 
-A goes back and B confirms, which is the order the framework's own row has
-always been in — `Tokens::standard_hints` is `["Back", "OK", …]`, and every
-reader puts Back on the leftmost key of its bottom row. The hint bar above the
-keys says the same thing, because it is painted from the board's own row.
+**The right-hand column is not written here.** `Buttons::new` looks each pin's
+key up in the board it was handed — `Board::BADGER_2040` or
+`Board::TUFTY_2040` — by the name in the left column, and takes what it sends
+from there. This firmware states only which GPIO each switch is on, which is
+the one thing a board cannot describe. Why `a` goes back and `c` is left bare
+is written where the decision is, beside
+[`BADGE_FOOTER`](../../crates/boards/src/pimoroni.rs). The hint bar above the
+keys is painted from `BADGE_ROW` in that same file, and
+`a_boards_keys_match_the_row_it_paints` holds the two together for every job
+the bar has a word for — which is why giving `c` one is an edit to both.
 
-**C has nothing on it.** `Right` without a `Left` is a value you can raise and
-never lower, and walking a list is what the up/down pair is for. Give it a job
-in one line when there is one worth doing:
+Give `c` a job by editing that file — the entry in `BADGE_FOOTER`, its twin in
+`BADGE_ROW`, and the line pinning it in
+`the_badges_keys_send_what_the_firmware_wires`. This firmware picks it up
+untouched. Both badges share that footer, so both gain the key.
 
-```text
-let buttons = Buttons::new(pins).with_c(Button::Down);
-```
-
-and change that board's `RowKey::Unassigned` to match, or the key works while
-its hint slot stays blank.
+Each key says what it resolved to on the way up, so a name the board does not
+carry — the Inky Frame's are `A` to `E` — shows as `None` beside the name
+that produced it rather than as a switch that feels broken. What no line can
+show is a pin behind the wrong name: both sides agree, and only a thumb on the
+board disagrees.
 
 **Back is not delivered on the root screen.** `Button::Back` finishes the
 current screen, and finishing the last one empties the stack, ends the frame
@@ -191,8 +197,8 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 219 kB of 2 MB | 94 kB of 256 kB |
-| `tufty2040` | 224 kB of 8 MB | 67 kB of 256 kB |
+| `badger2040` | 220 kB of 2 MB | 94 kB of 256 kB |
+| `tufty2040` | 225 kB of 8 MB | 67 kB of 256 kB |
 
 Of the Badger's 94 kB, 64 kB is the heap and **29 kB is the embassy task pool**
 — a `static` sized from the frame loop's future, which holds the panel driver
@@ -216,17 +222,18 @@ file on disk — an ELF carries debug information the board never sees.
 
 ## Pins
 
-Taken from Pimoroni's own board headers, not guessed.
+Taken from Pimoroni's own board headers, not guessed. The key names are the
+board's, because `Buttons::new` looks each one up by exactly that string.
 
-**Badger 2040** — buttons down GP11, A GP12, B GP13, C GP14, up GP15; SPI0
-clock GP18 and data GP19 (the panel never answers, so MISO is unused); panel
-chip select GP17, data/command GP20, reset GP21, busy GP26; 3V3 enable GP10,
-held high for as long as the firmware runs because on battery that pin *is* the
-rail.
+**Badger 2040** — buttons `Dn` GP11, `a` GP12, `b` GP13, `c` GP14, `Up` GP15;
+SPI0 clock GP18 and data GP19 (the panel never answers, so MISO is unused);
+panel chip select GP17, data/command GP20, reset GP21, busy GP26; 3V3 enable
+GP10, held high for as long as the firmware runs because on battery that pin
+*is* the rail.
 
-**Tufty 2040** — buttons down GP6, A GP7, B GP8, C GP9, up GP22; panel chip
-select GP10, data/command GP11, write GP12, read GP13; data bus DB0–DB7 on
-GP14–GP21 in order; backlight GP2, raised only after the first clear so the
+**Tufty 2040** — buttons `Dn` GP6, `a` GP7, `b` GP8, `c` GP9, `Up` GP22; panel
+chip select GP10, data/command GP11, write GP12, read GP13; data bus DB0–DB7
+on GP14–GP21 in order; backlight GP2, raised only after the first clear so the
 controller's power-on noise is never lit. GP27 is the battery-sense reference
 enable rather than a panel supply, and is left alone.
 
@@ -237,12 +244,24 @@ what it finds on the way up:
 
 ```text
 xpui: Badger 2040 296x128, panel 296x128
+xpui: key a sends Some(Back)
+xpui: key b sends Some(Confirm)
+xpui: key c sends None
+xpui: key Up sends Some(Up)
+xpui: key Dn sends Some(Down)
 xpui: first frame up, heap 5308 of 65536 used
 ```
 
-A mismatch between those two sizes is a driver configured a quarter turn out,
-which lays out plausibly and puts the screen in a corner of the glass. It costs
-one line to say so and an afternoon to find otherwise.
+A mismatch between the first two sizes is a driver configured a quarter turn
+out, which lays out plausibly and puts the screen in a corner of the glass. It
+costs one line to say so and an afternoon to find otherwise.
+
+The five key lines are the same idea: each is what the board answered for a
+name this firmware wires. They catch a name it does not carry — that key
+resolves to `None` and is silent — and they cannot catch a pin behind the wrong
+name, which is what pressing all five is for. Both boards have been pressed
+through all five, and `a` and `b` were checked as the pair most worth getting
+backwards.
 
 `cargo run --release --bin badger2040` shows it, with no extra flag. That took
 a fix: `probe-rs` finds the RTT control block by looking its symbol up in the

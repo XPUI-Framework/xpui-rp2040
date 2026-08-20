@@ -26,7 +26,7 @@ use {
     uc8151::{LUT, Uc8151},
     xpui_boards::Board,
     xpui_eg::Palette,
-    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
+    xpui_rp2040::{ButtonPins, init_heap, init_log, run},
 };
 
 /// What Pimoroni's own driver clocks this panel at. It moves the 4,736-byte
@@ -48,13 +48,13 @@ async fn main(_spawner: Spawner) {
     // it at boot and drops it to power the badge down.
     let _power = Output::new(p.PIN_10, Level::High);
 
-    let buttons = Buttons::new(ButtonPins {
+    let pins = ButtonPins {
         a: Input::new(p.PIN_12, Pull::Down),
         b: Input::new(p.PIN_13, Pull::Down),
         c: Input::new(p.PIN_14, Pull::Down),
         up: Input::new(p.PIN_15, Pull::Down),
         down: Input::new(p.PIN_11, Pull::Down),
-    });
+    };
 
     let mut spi_config = SpiConfig::default();
     spi_config.frequency = SPI_FREQUENCY;
@@ -82,7 +82,7 @@ async fn main(_spawner: Spawner) {
         // follow the driver here, not `embedded_graphics`' usual reading of
         // `On` as the lit pixel.
         Palette::INK_IS_OFF,
-        buttons,
+        pins,
         Menu::new(),
         |display: &mut _| {
             // Blocks until the panel has finished, around a second. Nothing

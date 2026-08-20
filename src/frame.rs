@@ -13,7 +13,7 @@ use xpui::screen::Screen;
 use xpui_boards::Board;
 use xpui_eg::{Backend, Palette};
 
-use crate::Buttons;
+use crate::buttons::{ButtonPins, Buttons};
 use crate::runtime::park;
 
 /// How often the loop wakes.
@@ -44,7 +44,7 @@ pub async fn run<D, S>(
     display: D,
     board: Board,
     palette: Palette<D::Color>,
-    buttons: Buttons,
+    pins: ButtonPins,
     root: S,
     mut present: impl FnMut(&mut D),
 ) -> !
@@ -64,7 +64,7 @@ where
         display,
         board,
         palette,
-        buttons,
+        pins,
         root,
         async |display: &mut D| present(display),
     )
@@ -82,7 +82,7 @@ pub async fn run_async<D, S>(
     display: D,
     board: Board,
     palette: Palette<D::Color>,
-    mut buttons: Buttons,
+    pins: ButtonPins,
     root: S,
     mut present: impl AsyncFnMut(&mut D),
 ) -> !
@@ -112,6 +112,11 @@ where
         panel.width,
         panel.height
     );
+
+    // Built from the board handed to this loop rather than by the caller, so
+    // the description the chrome is painted from and the one the keys are read
+    // from cannot be two different boards.
+    let mut buttons = Buttons::new(board, pins);
 
     let backend = Backend::leak_for_board(display, board, palette);
     // Safety: one panel, one executor task, and nothing has rendered yet.

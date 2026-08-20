@@ -33,7 +33,7 @@ use {
     mipidsi::options::{ColorInversion, ColorOrder, Orientation, Rotation},
     xpui_boards::Board,
     xpui_eg::{PacedFill, Palette},
-    xpui_rp2040::{ButtonPins, Buttons, init_heap, init_log, run},
+    xpui_rp2040::{ButtonPins, init_heap, init_log, run},
 };
 
 #[embassy_executor::main]
@@ -45,13 +45,13 @@ async fn main(_spawner: Spawner) {
 
     let p = embassy_rp::init(Default::default());
 
-    let buttons = Buttons::new(ButtonPins {
+    let pins = ButtonPins {
         a: Input::new(p.PIN_7, Pull::Down),
         b: Input::new(p.PIN_8, Pull::Down),
         c: Input::new(p.PIN_9, Pull::Down),
         up: Input::new(p.PIN_22, Pull::Down),
         down: Input::new(p.PIN_6, Pull::Down),
-    });
+    };
 
     // Selected once and held, rather than per transfer: the panel is the only
     // device on this bus.
@@ -115,7 +115,7 @@ async fn main(_spawner: Spawner) {
         // matter of choosing which two — this pair reads like the e-ink panel
         // the same screens run on.
         Palette::new(Rgb565::BLACK, Rgb565::WHITE),
-        buttons,
+        pins,
         Menu::new(),
         // The parallel interface writes straight to the controller, so drawing
         // has already reached the glass. There is nothing left to push.

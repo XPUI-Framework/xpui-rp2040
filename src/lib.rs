@@ -20,6 +20,6 @@ mod buttons;
 mod frame;
 mod runtime;
 
-pub use buttons::{ButtonPins, Buttons};
+pub use buttons::ButtonPins;
 pub use frame::run;
 pub use runtime::{init_heap, init_log, park};

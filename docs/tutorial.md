@@ -170,7 +170,7 @@ the Badger does not need it, because the published `uc8151` blocks.
 |---|---|
 | Heap | 64 kB, in [`src/runtime.rs`](../src/runtime.rs) — the leaked backend, the screen stack, and the view tree `body()` rebuilds every frame |
 | The Badger's framebuffer | 4,736 bytes, inside the backend |
-| The whole firmware | around 219 kB of flash |
+| The whole firmware | around 220 kB of flash |
 
 The rule that keeps you inside it: **`body()` runs on every paint and on every
 frame carrying input.** Build `String`s when the screen is built, not while
@@ -219,9 +219,10 @@ root `cargo build` does not reach it at all — use `--manifest-path`.
 ## What has been proven, and where
 
 Both boards here have been run over a debug probe. The firmware says what it
-found on the way up — board size against panel size, and the heap after the
-first frame — because a driver a quarter turn out lays out plausibly and puts
-the screen in a corner of the glass.
+found on the way up — board size against panel size, what each key resolved to,
+and the heap after the first frame — because a driver a quarter turn out lays
+out plausibly and puts the screen in a corner of the glass, and a key looked up
+under a name the board does not carry is otherwise simply silent.
 
 Three faults came out of that first run, and each is worth knowing before you
 meet it on your own board:
