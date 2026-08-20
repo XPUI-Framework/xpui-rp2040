@@ -170,7 +170,7 @@ the Badger does not need it, because the published `uc8151` blocks.
 |---|---|
 | Heap | 64 kB, in [`src/runtime.rs`](../src/runtime.rs) — the leaked backend, the screen stack, and the view tree `body()` rebuilds every frame |
 | The Badger's framebuffer | 4,736 bytes, inside the backend |
-| The whole firmware | around 207 kB of flash |
+| The whole firmware | around 219 kB of flash |
 
 The rule that keeps you inside it: **`body()` runs on every paint and on every
 frame carrying input.** Build `String`s when the screen is built, not while
@@ -238,6 +238,7 @@ meet it on your own board:
   path. `PacedFill` in `xpui-embedded-graphics` is the wrapper that avoids it, and
   the whole story is in its module docs.
 
-Three pin decisions still differ deliberately from Pimoroni's reference code,
-and [the README](../README.md) lists them. What has *not* been tried is battery
-operation: both boards have only been run over USB.
+What has *not* been tried is battery operation: both boards have only been run
+over USB, where the Badger's GP10 holds up a rail the USB supply is feeding
+anyway. See [the README's pin tables](../README.md#pins) for what every pin on
+both boards does.

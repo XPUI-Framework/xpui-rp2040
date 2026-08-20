@@ -72,11 +72,17 @@ thing to own than a warning.
 
 ## Flash
 
-**Over USB, no probe.** Hold BOOTSEL, plug the board in, wait for the `RPI-RP2`
-drive to appear, then:
+**Over USB, no probe.** Install the tool first — it is a compile, and the board
+should not be sitting in bootloader mode while it runs:
 
 ```bash
 cargo install elf2uf2-rs
+```
+
+Then hold BOOTSEL, plug the board in, wait for the `RPI-RP2` drive, and **from
+the repository root**:
+
+```bash
 elf2uf2-rs -d examples/rp2040/target/thumbv6m-none-eabi/release/badger2040
 ```
 
@@ -185,8 +191,15 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 200 kB of 2 MB | 74 kB of 256 kB, 64 kB of it the heap |
-| `tufty2040` | 206 kB of 8 MB | 65 kB of 256 kB, 64 kB of it the heap |
+| `badger2040` | 219 kB of 2 MB | 94 kB of 256 kB |
+| `tufty2040` | 224 kB of 8 MB | 67 kB of 256 kB |
+
+Of the Badger's 94 kB, 64 kB is the heap and **29 kB is the embassy task pool**
+— a `static` sized from the frame loop's future, which holds the panel driver
+by value while `run` hands it on. The Tufty's is 1 kB. On the Badger that pool
+is the largest thing after the heap and the first place to look if RAM runs
+short; note it is six times the 4,736-byte framebuffer it carries, so shrinking
+the driver saves more than its own size.
 
 The rest of RAM is the stack, which grows down from the top.
 
