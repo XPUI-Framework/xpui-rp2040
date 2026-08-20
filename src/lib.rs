@@ -21,5 +21,5 @@ mod frame;
 mod runtime;
 
 pub use buttons::ButtonPins;
-pub use frame::run;
+pub use frame::{run, run_async};
 pub use runtime::{init_heap, init_log, park};
