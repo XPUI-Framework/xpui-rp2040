@@ -122,7 +122,11 @@ where
     // Safety: one panel, one executor task, and nothing has rendered yet.
     unsafe { xpui::host::install(backend) };
 
-    let mut app = App::new(root);
+    // Nothing owns a screen under this one. Finishing the root would empty the
+    // stack, end this loop and leave the board unresponsive, which from the
+    // outside is a crash — so the root is kept, and Back stays a key a screen
+    // or an open value can still claim.
+    let mut app = App::new(root).keep_root();
 
     // Painted once before the loop, or the panel holds whatever survived reset
     // until the first button press happens to make something dirty. On e-ink
@@ -141,9 +145,7 @@ where
         // Wrapping at 49 days is the framework's contract for a clock; what
         // reads it measures short intervals, not absolute time.
         backend.begin_frame(Instant::now().as_millis() as u32);
-        // A root screen has nothing underneath it, so Back is withheld there
-        // rather than delivered and obeyed — see `Buttons::poll`.
-        buttons.poll(backend, app.depth() > 1);
+        buttons.poll(backend);
 
         app.tick();
         if app.render_if_dirty() {
@@ -154,8 +156,10 @@ where
         Timer::after(FRAME_INTERVAL).await;
     }
 
-    // The root screen finished. A device has nowhere to return to, so stop and
-    // leave the last frame where it can still be read.
+    // Unreachable while the root is kept, and here because a loop that returns
+    // `!` needs an end: if the root ever stops being kept, this is what stops
+    // the board rather than letting it fall off the end of the function. It
+    // leaves the last frame where it can still be read.
     rprintln!("xpui: root screen finished — parking, the board is now deaf");
     park()
 }

@@ -110,10 +110,11 @@ impl Buttons {
     /// loop runs at a press settles in about 40 ms — long enough to swallow
     /// contact bounce, short enough not to be felt.
     ///
-    /// `back_leads_somewhere` is the caller's answer to "is there a screen
-    /// underneath this one". See the note on [`Buttons::poll`]'s use in
-    /// `frame.rs`: on a device the answer decides whether Back is a key at all.
-    pub(crate) fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>, back_leads_somewhere: bool) {
+    /// Every switch is reported, Back included. Whether finishing the root
+    /// screen is allowed is [`App::keep_root`](xpui::App::keep_root)'s answer,
+    /// not a pin's: withholding the key here would also stop a screen claiming
+    /// it and stop an open value being cancelled.
+    pub(crate) fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>) {
         for key in &mut self.keys {
             // **Sampled first, and always.** A key that is skipped leaves its
             // debouncer holding a stale level, so the first press after it
@@ -123,17 +124,6 @@ impl Buttons {
             let edge = key.debouncer.update(key.pin.is_high());
 
             let Some(button) = key.button else { continue };
-
-            // A root screen on a board has nowhere to go back to. `Button::Back`
-            // finishes the current screen, and finishing the *last* one empties
-            // the stack, ends the frame loop and parks the board — which from
-            // the outside is indistinguishable from a firmware that crashed,
-            // because every other key stops answering too. A phone can afford
-            // that key because something owns the screen underneath it; here
-            // nothing does, so the press is simply not delivered.
-            if button == Button::Back && !back_leads_somewhere {
-                continue;
-            }
 
             match edge {
                 Some(Edge::Rising) => backend.press(button),

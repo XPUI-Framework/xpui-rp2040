@@ -231,9 +231,11 @@ meet it on your own board:
   refresh takes, and the button still reads as down on the frame after. The
   framework no longer credits a gap it could not see through — but if you write
   your own loop, that is the trap.
-- **`Button::Back` on a root screen ends the app**, which on a device means the
-  loop exits and the board parks. [`src/buttons.rs`](../src/buttons.rs) does
-  not deliver it there.
+- **`Button::Back` on a root screen would end the app**, which on a device
+  means the loop exits and the board parks. `App::keep_root()` is the opt-in
+  that declines it — see [`src/frame.rs`](../src/frame.rs). Decline the *pop*,
+  never the key: a screen may claim Back for itself and an open value cancels
+  with it, and a loop that drops the key at the pin takes both away.
 - **`mipidsi` shortens a run of one colour into a bare strobe loop** that
   outruns an ST7789 over a parallel bus, and only black and white take that
   path. `PacedFill` in `xpui-embedded-graphics` is the wrapper that avoids it, and

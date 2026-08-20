@@ -135,11 +135,17 @@ that produced it rather than as a switch that feels broken. What no line can
 show is a pin behind the wrong name: both sides agree, and only a thumb on the
 board disagrees.
 
-**Back is not delivered on the root screen.** `Button::Back` finishes the
-current screen, and finishing the last one empties the stack, ends the frame
-loop and parks the board — which from the outside is indistinguishable from a
-crash, because every other key stops answering too. A phone can afford that key
-because something owns the screen underneath; here nothing does.
+**Back is delivered everywhere; the root simply refuses to finish.** This
+firmware calls `App::keep_root()`, so `Button::Back` reaches the screen as it
+always does — a screen may claim it, an open value cancels with it — and only
+the last of its three meanings, finishing the screen, is declined at the root.
+
+Withholding the key instead is what this firmware used to do, and it took the
+other two meanings with it: a screen could not dismiss its own picker, and a
+value opened on a root screen could be committed but never cancelled. The
+reason for the guard was real — finishing the last screen empties the stack,
+ends the frame loop and parks the board, which from the outside is
+indistinguishable from a crash — but the fix belongs where the stack is.
 
 Each is debounced over four samples of a 10 ms loop and reported as an *edge*,
 because `xpui`'s input is edge-based: a button reported as held on every frame
