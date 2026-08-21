@@ -237,8 +237,9 @@ meet it on your own board:
   never the key: a screen may claim Back for itself and an open value cancels
   with it, and a loop that drops the key at the pin takes both away.
 - **`mipidsi` shortens a run of one colour into a bare strobe loop** that
-  outruns an ST7789 over a parallel bus, and only black and white take that
-  path. `PacedFill` in `xpui-embedded-graphics` is the wrapper that avoids it, and
+  outruns an ST7789 over a parallel bus, and any pixel whose two bytes match
+  takes that path — 256 of them, ink and background among them. `PacedFill` in
+  `xpui-embedded-graphics` is the wrapper that avoids it, and
   the whole story is in its module docs.
 
 What has *not* been tried is battery operation: both boards have only been run

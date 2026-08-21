@@ -203,8 +203,8 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 220 kB of 2 MB | 94 kB of 256 kB |
-| `tufty2040` | 225 kB of 8 MB | 67 kB of 256 kB |
+| `badger2040` | 221 kB of 2 MB | 94 kB of 256 kB |
+| `tufty2040` | 227 kB of 8 MB | 67 kB of 256 kB |
 
 Of the Badger's 94 kB, 64 kB is the heap and **29 kB is the embassy task pool**
 — a `static` sized from the frame loop's future, which holds the panel driver
@@ -219,7 +219,8 @@ The rest of RAM is the stack, which grows down from the top.
 the gallery registers — Courier and Century — which are bitmaps in `.rodata`
 and cost nothing in RAM. They are reachable from nothing but
 `gallery::fonts::FAMILIES`, so shortening that list to `&[&HELVETICA]` drops
-them from the binary and halves it. Worth knowing before porting this to a part
+them from the binary and takes it to about 55% of its size. Worth knowing
+before porting this to a part
 with less room; see [`examples/gallery/src/fonts.rs`](../gallery/src/fonts.rs)
 for the measured comparison.
 
@@ -280,14 +281,16 @@ Three faults came out of that first session and are fixed:
 | | |
 |---|---|
 | Auto-repeat counted a panel refresh as a held key | one tap of Down walked the selection several rows. `Runtime` no longer credits a gap it could not see through |
-| `Back` on the root screen parked the board | it emptied the screen stack, ended the loop, and looked exactly like a crash. It is no longer delivered there |
-| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe without setting the data pins, at ~30 ns against a 66 ns minimum. Only black and white take it, which is ink and background — so fills came out as noise while text stayed crisp. See `PacedFill` in `xpui-embedded-graphics` |
+| `Back` on the root screen parked the board | it emptied the screen stack, ended the loop, and looked exactly like a crash. `App::keep_root()` now declines the pop; the key is still delivered, so a screen can claim it and an open value still cancels with it |
+| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe at ~30 ns against a 66 ns minimum. Any pixel whose two bytes match takes it — 256 of them, ink and background among them — so fills came out as noise while text stayed crisp. See `PacedFill` in `xpui-embedded-graphics` |
+
+**The heap figure is measured, not reasoned** — 5,308 bytes on the Badger and
+592 on the Tufty, of 65,536. One sample, of the root menu at boot: it says the
+reservation in `src/runtime.rs` is generous, not that it is generous under every
+screen. A screen that buffers an image has not been tried.
 
 Still unverified:
 
-- **The heap figure is now measured, not reasoned** — 5,308 bytes on the Badger
-  and 592 on the Tufty, of 65,536. The reasoning in `src/runtime.rs` was an
-  order of magnitude conservative, which is the right direction to be wrong in.
 - **Battery operation.** Both boards have been run over USB only. The Badger's
   GP10 3V3 enable is held high for the firmware's lifetime, which matters only
   on battery and has not been tried there.
