@@ -114,12 +114,12 @@ Five buttons, mapped by meaning rather than by position:
 | `Dn` | GP11 | GP6 | `Down` |
 
 **The right-hand column is not written here.** `Buttons::new` looks each pin's
-key up in the board it was handed — `Board::BADGER_2040` or
-`Board::TUFTY_2040` — by the name in the left column, and takes what it sends
+key up in the board it was handed — `pimoroni::BADGER_2040` or
+`pimoroni::TUFTY_2040` — by the name in the left column, and takes what it sends
 from there. This firmware states only which GPIO each switch is on, which is
 the one thing a board cannot describe. Why `a` goes back and `c` is left bare
 is written where the decision is, beside
-[`BADGE_FOOTER`](../../crates/boards/src/pimoroni.rs). The hint bar above the
+[`BADGE_FOOTER`](../../crates/boards/pimoroni/src/lib.rs). The hint bar above the
 keys is painted from `BADGE_ROW` in that same file, and
 `a_boards_keys_match_the_row_it_paints` holds the two together for every job
 the bar has a word for — which is why giving `c` one is an edit to both.

@@ -10,7 +10,7 @@ use embassy_rp::gpio::Input;
 use embedded_graphics::draw_target::DrawTarget;
 use rtt_target::rprintln;
 use xpui::Button;
-use xpui_boards::Board;
+use xpui_boards_core::Board;
 use xpui_eg::Backend;
 
 /// The five switches, one field per switch.

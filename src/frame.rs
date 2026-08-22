@@ -11,7 +11,7 @@ use gallery::wire;
 use rtt_target::rprintln;
 use xpui::App;
 use xpui::screen::Screen;
-use xpui_boards::Board;
+use xpui_boards_core::Board;
 use xpui_eg::{Backend, Palette};
 
 use crate::buttons::{ButtonPins, Buttons};

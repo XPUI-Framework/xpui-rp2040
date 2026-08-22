@@ -17,6 +17,8 @@
 #![no_std]
 #![no_main]
 
+use xpui_boards_pimoroni as pimoroni;
+
 use {
     embassy_executor::Spawner,
     embassy_rp::gpio::{Input, Level, Output, Pull},
@@ -24,7 +26,6 @@ use {
     embassy_time::Delay,
     gallery::Menu,
     uc8151::{LUT, Uc8151},
-    xpui_boards::Board,
     xpui_eg::Palette,
     xpui_rp2040::{ButtonPins, init_heap, init_log, run},
 };
@@ -76,7 +77,7 @@ async fn main(_spawner: Spawner) {
 
     run(
         display,
-        Board::BADGER_2040,
+        pimoroni::BADGER_2040,
         // `Off` is black. The driver inverts deliberately, so that a 1-bit
         // bitmap loads the way it was drawn — which means ink and background
         // follow the driver here, not `embedded_graphics`' usual reading of

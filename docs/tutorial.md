@@ -65,9 +65,9 @@ not the backend, not the components that paint. Joining the two is your job,
 and it is one derivation and five builder calls.
 
 ```rust
-use xpui_boards::Board;
+use xpui_boards_pimoroni as pimoroni;
 
-let badger = Board::BADGER_2040;
+let badger = pimoroni::BADGER_2040;
 
 assert_eq!((badger.width, badger.height), (296, 128));
 assert!(!badger.touch);
@@ -80,12 +80,12 @@ Here is the wiring. Each line answers one question, four of them with a value
 the board holds and the last with the measurements the first line derived:
 
 ```rust
-use xpui_boards::Board;
 use xpui::host::Canvas;
+use xpui_boards_pimoroni as pimoroni;
 use xpui_eg::{Backend, Fonts, Labels, Metrics, Palette};
 use xpui_screenshot::Framebuffer;
 
-let badger = Board::BADGER_2040;
+let badger = pimoroni::BADGER_2040;
 
 // How big everything is. Derived from the panel's size and the board's UI
 // scale; the last argument is whether to reserve the band along the bottom

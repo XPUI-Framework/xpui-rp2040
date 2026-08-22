@@ -20,6 +20,8 @@
 #![no_std]
 #![no_main]
 
+use xpui_boards_pimoroni as pimoroni;
+
 use {
     embassy_executor::Spawner,
     embassy_rp::gpio::{Input, Level, Output, Pull},
@@ -31,7 +33,6 @@ use {
     mipidsi::interface::{Generic8BitBus, ParallelInterface},
     mipidsi::models::ST7789,
     mipidsi::options::{ColorInversion, ColorOrder, Orientation, Rotation},
-    xpui_boards::Board,
     xpui_eg::{PacedFill, Palette},
     xpui_rp2040::{ButtonPins, init_heap, init_log, run},
 };
@@ -81,7 +82,7 @@ async fn main(_spawner: Spawner) {
     // The ST7789's framebuffer is 240x320 portrait and the Tufty's glass is
     // mounted a quarter turn from it, so the panel is described in its own
     // orientation and then rotated. `Display::size` reports 320x240 after that,
-    // which is what `Board::TUFTY_2040` says and what the chrome is sized for.
+    // which is what `pimoroni::TUFTY_2040` says and what the chrome is sized for.
     //
     // Inverted colour is the panel's polarity, not a stylistic choice: without
     // it black and white come out the wrong way round.
@@ -109,7 +110,7 @@ async fn main(_spawner: Spawner) {
 
     run(
         display,
-        Board::TUFTY_2040,
+        pimoroni::TUFTY_2040,
         // Black on white. The framework paints in ink and background and has no
         // way to ask for a third colour, so running it on colour hardware is a
         // matter of choosing which two — this pair reads like the e-ink panel

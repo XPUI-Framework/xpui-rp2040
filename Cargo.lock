@@ -1565,10 +1565,34 @@ name = "xpui"
 version = "0.1.0"
 
 [[package]]
-name = "xpui-boards"
+name = "xpui-boards-core"
 version = "0.1.0"
 dependencies = [
  "xpui",
+]
+
+[[package]]
+name = "xpui-boards-pimoroni"
+version = "0.1.0"
+dependencies = [
+ "xpui",
+ "xpui-boards-core",
+]
+
+[[package]]
+name = "xpui-boards-seeed"
+version = "0.1.0"
+dependencies = [
+ "xpui",
+ "xpui-boards-core",
+]
+
+[[package]]
+name = "xpui-boards-xteink"
+version = "0.1.0"
+dependencies = [
+ "xpui",
+ "xpui-boards-core",
 ]
 
 [[package]]
@@ -1594,7 +1618,10 @@ name = "xpui-gallery"
 version = "0.1.0"
 dependencies = [
  "xpui",
- "xpui-boards",
+ "xpui-boards-core",
+ "xpui-boards-pimoroni",
+ "xpui-boards-seeed",
+ "xpui-boards-xteink",
  "xpui-chrome",
  "xpui-embedded-graphics",
  "xpui-simulator",
@@ -1616,7 +1643,8 @@ dependencies = [
  "rtt-target",
  "uc8151",
  "xpui",
- "xpui-boards",
+ "xpui-boards-core",
+ "xpui-boards-pimoroni",
  "xpui-embedded-graphics",
  "xpui-gallery",
 ]
@@ -1635,7 +1663,7 @@ dependencies = [
  "embedded-graphics",
  "embedded-graphics-simulator",
  "xpui",
- "xpui-boards",
+ "xpui-boards-core",
  "xpui-chrome",
  "xpui-embedded-graphics",
  "xpui-screenshot",
