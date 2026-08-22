@@ -7,6 +7,7 @@
 
 use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::draw_target::DrawTarget;
+use gallery::wire;
 use rtt_target::rprintln;
 use xpui::App;
 use xpui::screen::Screen;
@@ -118,7 +119,10 @@ where
     // from cannot be two different boards.
     let mut buttons = Buttons::new(board, pins);
 
-    let backend = Backend::leak_for_board(display, board, palette);
+    // The application composes the backend, because nothing below it knows
+    // what a board is: measurements and words come from the panel's size, the
+    // key row and the Left/Right pair from the hardware.
+    let backend = wire(display, board, palette).leaked();
     // Safety: one panel, one executor task, and nothing has rendered yet.
     unsafe { xpui::host::install(backend) };
 

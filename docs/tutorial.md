@@ -54,10 +54,15 @@ rest of this will not help — take them out first.
 
 ## 1. The board is data
 
-A `Board` is what the panel *is*: its size, the chrome that fits it, whether it
-has a touchscreen, how long a refresh takes. Both the simulator and the
+A `Board` is what the panel and the case *are*: size, orientation, whether it
+has a touchscreen, how long a refresh takes, what the keys along the bottom
+mean, and how big the glass is in millimetres. Both the simulator and the
 firmware read the same value, which is what makes "develop in a window, then
 flash it" true rather than aspirational.
+
+**It is not the chrome.** Nothing below your firmware knows what a board is —
+not the backend, not the components that paint. Joining the two is your job,
+and it is one derivation and five builder calls.
 
 ```rust
 use xpui_boards::Board;
@@ -71,25 +76,54 @@ assert!(!badger.touch);
 assert_eq!(badger.refresh_ms, 900);
 ```
 
-Build the backend from it and the chrome sizes itself:
+Here is the wiring. Each line answers one question, four of them with a value
+the board holds and the last with the measurements the first line derived:
 
 ```rust
 use xpui_boards::Board;
-use xpui_eg::{Backend, Palette};
+use xpui::host::Canvas;
+use xpui_eg::{Backend, Fonts, Labels, Metrics, Palette};
 use xpui_screenshot::Framebuffer;
 
 let badger = Board::BADGER_2040;
-let backend = Backend::for_board(
+
+// How big everything is. Derived from the panel's size and the board's UI
+// scale; the last argument is whether to reserve the band along the bottom
+// that names the keys. `!badger.touch` is `true` here — a board driven by a
+// finger has no keys to name, and the band would be a strip of words for
+// hardware nobody has. `gallery::wire` derives it the same way.
+let metrics =
+    Metrics::for_device(badger.width, badger.height, badger.ui_scale_percent, !badger.touch);
+
+let backend = Backend::new(
     Framebuffer::new(badger.width, badger.height),
-    badger,
     // This board's polarity, and it is not the obvious one — step 2.
     Palette::INK_IS_OFF,
-);
+)
+.with_metrics(metrics)
+// What the hint band says. A 296x128 strip gets "OK" where a reader gets
+// "Select", because the long word does not fit across a third of it.
+.with_labels(Labels::for_panel(badger.width, badger.height))
+// What the keys along the bottom mean, in order. The Badger's row is three
+// slots — Back, Confirm, and one with nothing on it — because the pair that
+// walks a list sits down the edge, not along the bottom. A hardware fact, so
+// it comes off the board rather than out of a preset.
+.with_keys(badger.keys)
+// Whether Left and Right exist as keys, which decides how a value can be
+// edited. The Badger has neither.
+.with_left_right_keys(badger.has_left_right_keys())
+// Faces chosen to fit the measurements — so a 296x128 strip does not get type
+// taller than its own hint band.
+.with_fonts(Fonts::for_metrics(&metrics));
 
-// The board's tokens carry its UI scale, and the faces are chosen to fit them
-// — so a 296x128 strip does not get type taller than its own hint band.
-assert_eq!(backend.board(), Some(badger));
+// The size is the display's, whatever the board says — `Backend::new` measures
+// what it is handed.
+assert_eq!(backend.screen_size().width, 296);
 ```
+
+The gallery packages exactly that as `gallery::wire`, and both RP2040 binaries
+call it rather than repeating the block. Yours can too; write it out once if
+you would rather see it.
 
 > `Framebuffer` is the host-side target these snippets draw into so they can be
 > tested. On the board it is the panel driver — see step 3.
