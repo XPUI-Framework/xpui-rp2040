@@ -42,7 +42,6 @@ bench = false
 [dependencies]
 xpui = { path = "../../crates/xpui" }
 xpui-boards = { path = "../../crates/boards" }
-xpui-chrome = { path = "../../crates/backend/chrome" }
 # `critical-section` on, because this is a device: an interrupt handler could
 # plausibly reach the backend, and on the panel that costs a brief interrupt
 # mask rather than aliasing `&mut D`. The implementation comes from

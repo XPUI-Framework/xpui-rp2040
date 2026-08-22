@@ -1620,7 +1620,6 @@ dependencies = [
  "uc8151",
  "xpui",
  "xpui-boards",
- "xpui-chrome",
  "xpui-embedded-graphics",
  "xpui-gallery",
 ]
@@ -1633,7 +1632,6 @@ dependencies = [
  "embedded-graphics-simulator",
  "xpui",
  "xpui-boards",
- "xpui-chrome",
  "xpui-embedded-graphics",
 ]
 
