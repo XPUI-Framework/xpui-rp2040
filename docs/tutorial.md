@@ -75,7 +75,8 @@ Build the backend from it and the chrome sizes itself:
 
 ```rust
 use xpui_boards::Board;
-use xpui_eg::{Backend, Framebuffer, Palette};
+use xpui_eg::{Backend, Palette};
+use xpui_screenshot::Framebuffer;
 
 let badger = Board::BADGER_2040;
 let backend = Backend::for_board(

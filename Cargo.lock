@@ -1585,7 +1585,6 @@ version = "0.1.0"
 dependencies = [
  "critical-section",
  "embedded-graphics",
- "png",
  "u8g2-fonts",
  "xpui",
  "xpui-boards",
@@ -1625,6 +1624,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "xpui-screenshot"
+version = "0.1.0"
+dependencies = [
+ "embedded-graphics",
+]
+
+[[package]]
 name = "xpui-simulator"
 version = "0.1.0"
 dependencies = [
@@ -1633,6 +1639,7 @@ dependencies = [
  "xpui",
  "xpui-boards",
  "xpui-embedded-graphics",
+ "xpui-screenshot",
 ]
 
 [[package]]
