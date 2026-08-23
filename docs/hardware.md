@@ -24,7 +24,7 @@ key up in the board it was handed — `pimoroni::BADGER_2040` or
 from there. This firmware states only which GPIO each switch is on, which is
 the one thing a board cannot describe. Why `a` goes back and `c` is left bare
 is written where the decision is, beside
-[`BADGE_FOOTER`](../../../crates/boards/pimoroni/src/lib.rs). The hint bar above the
+[`BADGE_FOOTER`](https://github.com/XPUI-Framework/xpui-boards/blob/main/pimoroni/src/lib.rs). The hint bar above the
 keys is painted from `BADGE_ROW` in that same file, and
 `a_boards_keys_match_the_row_it_paints` holds the two together for every job
 the bar has a word for — which is why giving `c` one is an edit to both.
@@ -126,7 +126,7 @@ and cost nothing in RAM. They are reachable from nothing but
 `gallery::fonts::FAMILIES`, so shortening that list to `&[&HELVETICA]` drops
 them from the binary and takes it to about 55% of its size. Worth knowing
 before porting this to a part
-with less room; see [`examples/gallery/src/fonts.rs`](../../gallery/src/fonts.rs)
+with less room; see [`examples/gallery/src/fonts.rs`](https://github.com/XPUI-Framework/xpui-gallery/blob/main/gallery/src/fonts.rs)
 for the measured comparison.
 
 These are measured from the allocated sections of a release ELF, not from the

@@ -3,7 +3,7 @@
 > ⚠️ **Under heavy development.** Not production-ready. The API can break
 > without notice. Use at your own risk.
 
-Two firmware binaries that flash [the gallery](../gallery/) to a Pimoroni
+Two firmware binaries that flash [the gallery](https://github.com/XPUI-Framework/xpui-gallery/tree/main/gallery) to a Pimoroni
 board. Same screens the simulator runs, same crate, no device-specific code in
 them at all.
 
