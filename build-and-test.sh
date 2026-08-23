@@ -44,6 +44,22 @@ HOST_WORKSPACE=0
 LINT_TARGETS=("thumbv6m-none-eabi")
 LINT_TARGET_CRATES=(--all-targets)
 
+# Two crates here have no tests, and both are deliberate.
+#
+# The firmware sets `test = false` on every target: a test harness needs
+# libtest, which does not exist for `thumbv6m-none-eabi`, so the only thing
+# `--all-targets` could do is fail. What its glue does — panel init, refresh
+# pacing, key debouncing — is unreachable from a laptop by construction. The
+# UI it draws is `xpui-gallery`'s, snapshotted seventy ways there.
+#
+# `docs-test` is one `include_str!` and nothing else. Its whole job is to be a
+# host-target crate that compiles this repository's prose, and `test_extra`
+# runs exactly that.
+UNTESTED_CRATES=(
+  ".:the firmware; test = false, and a HAL cannot compile for a laptop"
+  "docs-test:a doctest mount; its only content is this repository's tutorial"
+)
+
 . bin/gate-common.sh
 
 # ---------------------------------------------------------------------------
@@ -100,6 +116,7 @@ firmware_links() {
 
 gates() {
   file_sizes
+  crates_are_tested
   every_check_runs
   readmes_warn
   prose_is_compiled
