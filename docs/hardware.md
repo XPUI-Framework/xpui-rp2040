@@ -76,17 +76,25 @@ check in the repository.
 Standing alone, its dependencies are unconditional and there is no cfg to
 reason about. Point an editor at this directory and it works.
 
-The cost is a lock file and a `target/` of its own. Standing alone, that costs
-nothing else: this crate is the repository, so the gate names no manifest path
-and no `-p` — it runs from here, and `.cargo/config.toml` supplies the target.
+The cost is a lock file and a `target/` of its own — and, less obviously, that
+**this repository holds three workspaces rather than one**. `.cargo/config.toml`
+makes `thumbv6m-none-eabi` the default target for everything below the root, so
+`docs-test/` and `xtask/` are each their own workspace and each names the host
+triple for itself. That is why the gate reaches all three by name:
 
 ```bash
-cargo fmt --check
+cargo fmt --manifest-path Cargo.toml --all --check
+cargo fmt --manifest-path docs-test/Cargo.toml --all --check
+cargo fmt --manifest-path xtask/Cargo.toml --all --check
 cargo clippy --release --all-targets --target thumbv6m-none-eabi -- -D warnings
 ```
 
-`./build-and-test.sh` runs both. Breaking the firmware on purpose fails it —
-that is checked, not assumed.
+`./build-and-test.sh` runs those and the two host-side lints beside them.
+Breaking the firmware on purpose fails it — that is checked, not assumed.
+
+Running only the two lines a reader would guess at — `cargo fmt --check` and
+the clippy above — leaves `docs-test/` and `xtask/` unformatted and unlinted,
+which is exactly what happened while this gate was being written.
 
 **Tests still do not run here**: a test harness needs libtest, which does not
 exist for `thumbv6m-none-eabi`. What is testable belongs in a crate that

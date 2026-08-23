@@ -1,0 +1,28 @@
+# This repository's gate, as a program rather than a thousand lines of
+# shell.  It holds only what this repository checks. It is firmware for a
+# Cortex-M0+, so there is no host workspace to test and one bare-metal lint
+# that is not optional.
+#
+# No dependencies, on purpose: a gate that fails because something it
+# fetched moved is a gate that has to be argued with before it can be
+# believed.
+[package]
+name = "xtask"
+description = "The gate for xpui-rp2040: format, the board's lint, and the prose"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Thiago Holanda <unnamedd@gmail.com>"]
+repository = "https://github.com/XPUI-Framework/xpui-rp2040"
+publish = false
+
+[dependencies]
+
+# Its own workspace, and not a member of the one above.
+#
+# `../.cargo/config.toml` makes `thumbv6m-none-eabi` the default target for
+# everything below the repository root, and a gate built for a Cortex-M0+ does
+# not run on the machine that invoked it. `../build-and-test.sh` names the host
+# triple for the same reason. `docs-test/` next door is arranged identically
+# and was here first.
+[workspace]

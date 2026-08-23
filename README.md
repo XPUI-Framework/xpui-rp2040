@@ -123,6 +123,17 @@ cargo test --manifest-path docs-test/Cargo.toml --doc \
   --target "$(rustc -vV | awk '/^host:/{print $2}')"
 ```
 
+Everything CI checks is one command, and it reaches all three of this
+repository's workspaces:
+
+```bash
+./build-and-test.sh          # format, the board's lint, and the prose
+./build-and-test.sh all      # the above, plus linking both firmware images
+```
+
+The checks are in [`xtask/`](xtask/) — this repository's own list, in Rust,
+holding nothing it does not run.
+
 ## What running it proved
 
 **Both boards have been run**, over a debug probe, and the firmware reports
