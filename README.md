@@ -123,7 +123,7 @@ cargo test --manifest-path docs-test/Cargo.toml --doc \
   --target "$(rustc -vV | awk '/^host:/{print $2}')"
 ```
 
-## What has and has not been run
+## What running it proved
 
 **Both boards have been run**, over a debug probe, and the firmware reports
 what it finds on the way up:
@@ -168,7 +168,7 @@ Three faults came out of that first session and are fixed:
 reservation in `src/runtime.rs` is generous, not that it is generous under every
 screen. A screen that buffers an image has not been tried.
 
-Still unverified:
+Two things a probe cannot reach, for whoever gets there next:
 
 - **Battery operation.** Both boards have been run over USB only. The Badger's
   GP10 3V3 enable is held high for the firmware's lifetime, which matters only
@@ -178,6 +178,51 @@ Still unverified:
 
 If a panel comes up inverted, the `Palette` is the wrong way round rather than
 the firmware being broken. See `Palette::INK_IS_ON` / `INK_IS_OFF`.
+
+## Where it sits
+
+Every arrow is a dependency in a `Cargo.toml`, and they all point inward
+toward `xpui`, which depends on nothing at all. That is the rule the
+organisation is arranged around: a backend can be written without the framework
+knowing it exists, and a firmware reaches whatever it needs directly rather
+than through whoever happens to sit above it.
+
+```mermaid
+flowchart BT
+  xpui["xpui<br/>the framework"]
+  chrome["xpui-chrome<br/>components"]
+  boards["xpui-boards<br/>seven devices"]
+  backends["xpui-backends<br/>two backends"]
+  simulator["xpui-simulator<br/>a window"]
+  gallery["xpui-gallery<br/>the app"]
+  rp2040["xpui-rp2040<br/>firmware"]
+  esp32["xpui-esp32<br/>firmware"]
+  cpp["xpui-cpp<br/>a C++ host"]
+  chrome --> xpui
+  boards --> xpui
+  backends --> xpui
+  backends --> chrome
+  simulator --> xpui
+  simulator --> chrome
+  simulator --> boards
+  simulator --> backends
+  gallery --> xpui
+  gallery --> chrome
+  gallery --> boards
+  gallery --> backends
+  gallery --> simulator
+  rp2040 --> xpui
+  rp2040 --> boards
+  rp2040 --> backends
+  rp2040 --> gallery
+  esp32 --> xpui
+  esp32 --> boards
+  esp32 --> backends
+  esp32 --> gallery
+  cpp --> xpui
+  cpp --> backends
+  style rp2040 stroke-width:3px
+```
 
 ## License
 
