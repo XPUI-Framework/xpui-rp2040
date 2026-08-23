@@ -247,9 +247,9 @@ elf2uf2-rs -d target/thumbv6m-none-eabi/release/badger2040
 Fenced `text`: these move a binary onto hardware, which is not something a test
 can do.
 
-Run both from [`examples/rp2040/`](../), whose `.cargo/config.toml` sets the
-target and the runner. This crate is its own workspace, so from the repository
-root `cargo build` does not reach it at all — use `--manifest-path`.
+Run both from [this repository's root](../), whose `.cargo/config.toml` sets
+the target and the runner — so neither line needs `--target`, and `cargo run`
+reaches for a debug probe on its own.
 
 ## What has been proven, and where
 

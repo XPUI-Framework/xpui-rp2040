@@ -32,13 +32,11 @@ screens are not touched.
 
 ## Build
 
-From the repository root, by manifest path:
+Both binaries, from this repository's root:
 
 ```bash
-cargo build --release --manifest-path examples/rp2040/Cargo.toml \
-  --bin badger2040 --target thumbv6m-none-eabi
-cargo build --release --manifest-path examples/rp2040/Cargo.toml \
-  --bin tufty2040 --target thumbv6m-none-eabi
+cargo build --release --bin badger2040 --target thumbv6m-none-eabi
+cargo build --release --bin tufty2040 --target thumbv6m-none-eabi
 ```
 
 Or from this directory, where `.cargo/config.toml` already sets the target:
@@ -47,7 +45,7 @@ Or from this directory, where `.cargo/config.toml` already sets the target:
 cargo build --release --bin badger2040
 ```
 
-Either way the ELF lands in `examples/rp2040/target/thumbv6m-none-eabi/release/`.
+Either way the ELF lands in `target/thumbv6m-none-eabi/release/`.
 This crate is its own workspace, so it has a `target/` of its own — see
 [its own workspace](#its-own-workspace).
 
@@ -86,7 +84,7 @@ Then hold BOOTSEL, plug the board in, wait for the `RPI-RP2` drive, and **from
 the repository root**:
 
 ```bash
-elf2uf2-rs -d examples/rp2040/target/thumbv6m-none-eabi/release/badger2040
+elf2uf2-rs -d target/thumbv6m-none-eabi/release/badger2040
 ```
 
 `-d` converts and copies in one step; the board reboots into the firmware by

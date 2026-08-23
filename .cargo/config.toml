@@ -2,9 +2,14 @@
 # so `cargo build` and `cargo run` here target the board and need no `--target`
 # flag.
 #
-# From the repository root there is nothing to read it: this crate is excluded
-# from that workspace, so a build there does not reach it at all. The gate uses
-# `--manifest-path` and names the target itself.
+# This crate is the repository, so "here" is the root and every build reads
+# this file. It stays its own workspace because an RP2040 HAL cannot compile
+# for a laptop, which is what kept it out of the monorepo's — the reason
+# outlived the monorepo.
+#
+# `docs-test/` below it is a second workspace and does *not* inherit the target
+# above: it compiles this repository's prose on the host, and names the host
+# triple itself for exactly that reason.
 
 [build]
 target = "thumbv6m-none-eabi" # Cortex-M0+

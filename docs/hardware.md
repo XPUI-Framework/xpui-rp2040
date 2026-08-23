@@ -76,14 +76,13 @@ check in the repository.
 Standing alone, its dependencies are unconditional and there is no cfg to
 reason about. Point an editor at this directory and it works.
 
-The cost is a lock file and a `target/` of its own, and that `-p xpui-rp2040`
-no longer reaches it from the repository root. Everything the gate does to it
-is by manifest path:
+The cost is a lock file and a `target/` of its own. Standing alone, that costs
+nothing else: this crate is the repository, so the gate names no manifest path
+and no `-p` — it runs from here, and `.cargo/config.toml` supplies the target.
 
 ```bash
-cargo fmt --check --manifest-path examples/rp2040/Cargo.toml
-cargo clippy --release --manifest-path examples/rp2040/Cargo.toml \
-  --all-targets --target thumbv6m-none-eabi -- -D warnings
+cargo fmt --check
+cargo clippy --release --all-targets --target thumbv6m-none-eabi -- -D warnings
 ```
 
 `./build-and-test.sh` runs both. Breaking the firmware on purpose fails it —
@@ -126,7 +125,7 @@ and cost nothing in RAM. They are reachable from nothing but
 `gallery::fonts::FAMILIES`, so shortening that list to `&[&HELVETICA]` drops
 them from the binary and takes it to about 55% of its size. Worth knowing
 before porting this to a part
-with less room; see [`examples/gallery/src/fonts.rs`](https://github.com/XPUI-Framework/xpui-gallery/blob/main/gallery/src/fonts.rs)
+with less room; see [`gallery/src/fonts.rs`](https://github.com/XPUI-Framework/xpui-gallery/blob/main/gallery/src/fonts.rs)
 for the measured comparison.
 
 These are measured from the allocated sections of a release ELF, not from the
