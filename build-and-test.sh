@@ -34,8 +34,14 @@ SOURCE_ROOTS=(.)
 # reaches it.
 EXTRA_MANIFESTS=(docs-test/Cargo.toml)
 
+# **No `?` on this one.** Elsewhere a trailing `?` skips a bare-metal target
+# that is not installed rather than failing a gate somebody cannot fix without
+# a download — which is safe there, because a host run still compiles the code.
+# Here there is no host run: with the target absent and the `?` present, this
+# gate ran zero clippy invocations, compiled none of `src/`, printed one
+# `skipped:` line and said "Checks passed."
 HOST_WORKSPACE=0
-LINT_TARGETS=("thumbv6m-none-eabi?")
+LINT_TARGETS=("thumbv6m-none-eabi")
 LINT_TARGET_CRATES=(--all-targets)
 
 . bin/gate-common.sh
@@ -52,6 +58,15 @@ LINT_TARGET_CRATES=(--all-targets)
 # Naming a triple in a committed file would pin one machine, so it is asked.
 host_target() {
   rustc -vV | awk '/^host:/{print $2}'
+}
+
+lint_extra() {
+  # `docs-test` is its own workspace, so the run above never reaches it. It is
+  # one `include_str!` and a manifest, but a manifest that stops resolving is
+  # the tutorial silently no longer being compiled.
+  say "Clippy, the crate that compiles the tutorial"
+  cargo clippy --manifest-path docs-test/Cargo.toml --all-targets \
+    --target "$(host_target)" -- -D warnings
 }
 
 test_extra() {
@@ -98,20 +113,17 @@ gates() {
 
 case "${1:-check}" in
   check)
-    rust_format_check
-    cpp_format_check
+    run_all "${FORMAT_CHECK[@]}"
     gates
     printf '\nChecks passed. "./build-and-test.sh all" also links both images.\n'
     ;;
   fix)
-    rust_format_fix
-    cpp_format_fix
+    run_all "${FORMAT_FIX[@]}"
     gates
     printf '\nFormatted and checked.\n'
     ;;
   all)
-    rust_format_check
-    cpp_format_check
+    run_all "${FORMAT_CHECK[@]}"
     gates
     firmware_links
     printf '\nEverything passed.\n'

@@ -4,7 +4,7 @@ You have a Badger 2040 — 296×128 of monochrome e-ink, five buttons, 2 MB of
 flash, no touchscreen. This puts a screen on it.
 
 It assumes you have written one for the simulator already;
-[the framework's tutorial](https://github.com/XPUI-Framework/xpui-framework/blob/main/crates/xpui/docs/tutorial.md) is that, and
+[the framework's tutorial](https://github.com/XPUI-Framework/xpui-framework/blob/main/docs/tutorial.md) is that, and
 nothing here repeats it. **What is different on a board is the subject.**
 
 Every Rust block below is compiled by `cargo test`. The device-only ones — an
