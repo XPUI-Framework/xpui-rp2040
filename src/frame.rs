@@ -120,7 +120,8 @@ where
     let mut buttons = Buttons::new(board, pins);
 
     // The application composes the backend, because nothing below it knows
-    // what a board is: measurements and words come from the panel's size, the
+    // what a board is: measurements come from the panel's size and the board's
+    // own UI scale, words from its size, the
     // key row and the Left/Right pair from the hardware.
     let backend = wire(display, board, palette).leaked();
     // Safety: one panel, one executor task, and nothing has rendered yet.
