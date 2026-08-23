@@ -116,7 +116,14 @@ any extra flag.
 | [Pins](docs/hardware.md#pins) | the wiring, per board |
 
 [`docs/tutorial.md`](docs/tutorial.md) is the walk-through: a board is data, the
-palette trap, and the panel driver seam.
+palette trap, and the panel driver seam. Its snippets are compiled — by
+`docs-test/`, which exists because nothing in this crate builds for a laptop
+and rustdoc runs snippets on the host:
+
+```bash
+cargo test --manifest-path docs-test/Cargo.toml --doc \
+  --target "$(rustc -vV | awk '/^host:/{print $2}')"
+```
 
 ## What has and has not been run
 

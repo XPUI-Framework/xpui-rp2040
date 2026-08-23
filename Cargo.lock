@@ -1563,10 +1563,12 @@ dependencies = [
 [[package]]
 name = "xpui"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-framework?branch=main#d3d63d5d302786a2ac73f196e4adbcf88e258461"
 
 [[package]]
 name = "xpui-boards-core"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-boards?branch=main#3aeeaf164e027f2d5fd55b4b40fe97f7fc81e0e6"
 dependencies = [
  "xpui",
 ]
@@ -1574,6 +1576,7 @@ dependencies = [
 [[package]]
 name = "xpui-boards-pimoroni"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-boards?branch=main#3aeeaf164e027f2d5fd55b4b40fe97f7fc81e0e6"
 dependencies = [
  "xpui",
  "xpui-boards-core",
@@ -1582,6 +1585,7 @@ dependencies = [
 [[package]]
 name = "xpui-boards-seeed"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-boards?branch=main#3aeeaf164e027f2d5fd55b4b40fe97f7fc81e0e6"
 dependencies = [
  "xpui",
  "xpui-boards-core",
@@ -1590,6 +1594,7 @@ dependencies = [
 [[package]]
 name = "xpui-boards-xteink"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-boards?branch=main#3aeeaf164e027f2d5fd55b4b40fe97f7fc81e0e6"
 dependencies = [
  "xpui",
  "xpui-boards-core",
@@ -1598,6 +1603,7 @@ dependencies = [
 [[package]]
 name = "xpui-chrome"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-chrome?branch=main#8576540f60bcc953455d5954fc98a53c4e942448"
 dependencies = [
  "xpui",
 ]
@@ -1605,6 +1611,7 @@ dependencies = [
 [[package]]
 name = "xpui-embedded-graphics"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-backends?branch=main#bf1cd6db40164d468f8924822c47d0ab7e53b03d"
 dependencies = [
  "critical-section",
  "embedded-graphics",
@@ -1616,6 +1623,7 @@ dependencies = [
 [[package]]
 name = "xpui-gallery"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-gallery?branch=main#115c6a5deb0a66ad5c4bab6d9e589068df315664"
 dependencies = [
  "xpui",
  "xpui-boards-core",
@@ -1652,13 +1660,16 @@ dependencies = [
 [[package]]
 name = "xpui-screenshot"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-backends?branch=main#bf1cd6db40164d468f8924822c47d0ab7e53b03d"
 dependencies = [
  "embedded-graphics",
+ "png",
 ]
 
 [[package]]
 name = "xpui-simulator"
 version = "0.1.0"
+source = "git+https://github.com/XPUI-Framework/xpui-simulator?branch=main#becc2112930051ad596a939fde92c8e8c234700d"
 dependencies = [
  "embedded-graphics",
  "embedded-graphics-simulator",

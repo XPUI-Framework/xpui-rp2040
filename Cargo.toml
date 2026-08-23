@@ -1,7 +1,8 @@
-# Its own workspace, deliberately. See `exclude` in the repository root's
-# Cargo.toml: membership is what forced every item in this crate behind a cfg,
-# and the cfg is what made it untestable and unreadable. The cost of standing
-# alone is this duplicated metadata and a second lock file.
+# Its own repository now, and still its own workspace. It was excluded from the
+# monorepo for a reason that has not changed: membership meant a host build,
+# and an RP2040 HAL cannot compile for a laptop, so every item here sat behind
+# a `device` cfg that no host test could reach and no editor could resolve.
+# Standing alone costs a second lock file and the metadata below.
 [workspace]
 
 [package]
@@ -40,21 +41,21 @@ bench = false
 # Unconditional, because nothing here builds for a laptop and nothing asks it
 # to. `.cargo/config.toml` sets the target; there is no host build to satisfy.
 [dependencies]
-xpui = { path = "../../crates/xpui" }
+xpui = { git = "https://github.com/XPUI-Framework/xpui-framework", branch = "main" }
 # Pimoroni only: these two binaries flash a Badger and a Tufty.
-xpui-boards-core = { path = "../../crates/boards/core" }
-xpui-boards-pimoroni = { path = "../../crates/boards/pimoroni" }
+xpui-boards-core = { git = "https://github.com/XPUI-Framework/xpui-boards", branch = "main" }
+xpui-boards-pimoroni = { git = "https://github.com/XPUI-Framework/xpui-boards", branch = "main" }
 # `critical-section` on, because this is a device: an interrupt handler could
 # plausibly reach the backend, and on the panel that costs a brief interrupt
 # mask rather than aliasing `&mut D`. The implementation comes from
 # `embassy-rp` below — the backend depends on the API only, as a library must.
-xpui-embedded-graphics = { path = "../../crates/backend/embedded_graphics", features = [
+xpui-embedded-graphics = { git = "https://github.com/XPUI-Framework/xpui-backends", branch = "main", features = [
     "critical-section",
 ] }
 
 # The screens. Package `xpui-gallery`, library `gallery` — the same crate the
 # desktop simulator runs, with nothing device-specific in it.
-xpui-gallery = { path = "../gallery" }
+xpui-gallery = { git = "https://github.com/XPUI-Framework/xpui-gallery", branch = "main" }
 
 embedded-graphics = "0.8"
 

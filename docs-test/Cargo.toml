@@ -1,0 +1,30 @@
+# The tutorial, compiled.
+#
+# `docs/tutorial.md` teaches somebody with a Badger in their hand, so it lives
+# beside the firmware. But this firmware is bare metal and nothing here builds
+# for a laptop, and rustdoc runs snippets on the host — so the crate that
+# compiles the prose cannot be the crate the prose is about.
+#
+# Its own workspace, and its own `.cargo` absent on purpose, so `cargo test`
+# here targets the host while everything one directory up targets the board.
+# Every crate it names is host-buildable; none of them is the firmware.
+[package]
+name = "xpui-rp2040-docs"
+description = "Compiles this repository's tutorial. Not published, not flashed."
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Thiago Holanda <unnamedd@gmail.com>"]
+repository = "https://github.com/XPUI-Framework/xpui-rp2040"
+publish = false
+
+[workspace]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+xpui = { git = "https://github.com/XPUI-Framework/xpui-framework", branch = "main" }
+xpui-boards-pimoroni = { git = "https://github.com/XPUI-Framework/xpui-boards", branch = "main" }
+xpui-embedded-graphics = { git = "https://github.com/XPUI-Framework/xpui-backends", branch = "main" }
+xpui-screenshot = { git = "https://github.com/XPUI-Framework/xpui-backends", branch = "main", features = ["golden"] }
