@@ -140,6 +140,10 @@ fn main() -> ExitCode {
         ("lint", Box::new(lint)),
         ("the prose compiles", Box::new(docs_test)),
         ("the gate's own tests", Box::new(gate_tests)),
+        (
+            "the nested clippy configs agree",
+            Box::new(nested_clippy_agrees),
+        ),
     ];
 
     // `all` is what a laptop runs before a board is flashed, and what CI runs
@@ -319,4 +323,60 @@ fn rustdoc_links() -> Result<String, String> {
         notes.push(format!("{manifest} on the host"));
     }
     Ok(notes.join(", "))
+}
+
+/// The nested workspaces lint under the same rules as the firmware.
+///
+/// Clippy reads the `clippy.toml` nearest the workspace root, and `docs-test/`
+/// and `xtask/` are their own workspaces — so without a copy each would lint
+/// under cargo's defaults rather than this organisation's `msrv`. `xpui-dev`
+/// compares the root file across every repository and cannot see these two:
+/// its list is one path, `clippy.toml`, and these are two directories down.
+///
+/// Which makes this the only thing that reads them, and the copies had a
+/// comment claiming otherwise.
+fn nested_clippy_agrees() -> Result<String, String> {
+    let root = std::fs::read_to_string("clippy.toml").map_err(|e| format!("  clippy.toml: {e}"))?;
+    let wanted: Vec<&str> = root
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && !l.starts_with('#'))
+        .collect();
+    if wanted.is_empty() {
+        return Err("clippy.toml sets nothing, so this would compare nothing".into());
+    }
+
+    let mut drifted = Vec::new();
+    let mut checked = Vec::new();
+    for nested in ["docs-test/clippy.toml", "xtask/clippy.toml"] {
+        let Ok(text) = std::fs::read_to_string(nested) else {
+            drifted.push(format!(
+                "  {nested} is missing, so that workspace lints under cargo's defaults"
+            ));
+            continue;
+        };
+        let here: Vec<&str> = text
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty() && !l.starts_with('#'))
+            .collect();
+        if here == wanted {
+            checked.push(nested);
+        } else {
+            drifted.push(format!("  {nested} sets different values from clippy.toml"));
+        }
+    }
+    if drifted.is_empty() {
+        Ok(format!(
+            "{} setting(s), in {}",
+            wanted.len(),
+            checked.join(" and ")
+        ))
+    } else {
+        Err(format!(
+            "{}\n\nEach nested workspace needs the root file's values, or it lints\n\
+             under different rules from the firmware one directory up.",
+            drifted.join("\n")
+        ))
+    }
 }

@@ -1,21 +1,12 @@
 # Clippy configuration for this nested workspace.
 #
-# `clippy.toml` is found at the workspace root, and `docs-test/` is its own
-# workspace — so without this copy it would lint under different rules from the
-# firmware one directory up. The gate reaches it as
+# `xtask/` is its own workspace — see the note in `Cargo.toml` — and clippy
+# reads the `clippy.toml` nearest the workspace root, so without this copy the
+# gate would lint itself under cargo's defaults rather than the organisation's.
 #
-#   cargo clippy --manifest-path docs-test/Cargo.toml --all-targets \
-#     --target "$(rustc -vV | awk '/^host:/{print $2}')" -- -D warnings
-#
-# The `--target` is not optional: `../.cargo/config.toml` makes
-# `thumbv6m-none-eabi` the default for everything below the repository root,
-# and this workspace compiles the prose on the host. Without it the run dies
-# inside a build dependency that has no bare-metal build.
-#
-# `nested_clippy_agrees` in `../xtask/src/main.rs` compares it against
-# `../clippy.toml`. Nothing else does: `xpui-dev` compares the root file across
-# every repository and its list is one path, which does not reach a directory
-# down.
+# `nested_clippy_agrees` in `src/main.rs` compares it against `../clippy.toml`.
+# Nothing else does: `xpui-dev` compares the root file across every repository
+# and its list is one path, which does not reach two directories down.
 
 # The OLDEST toolchain that has to compile this code, which is not the one in
 # `rust-toolchain.toml`: the ESP32-S3 builds with the esp-rs Xtensa fork, and
