@@ -180,3 +180,7 @@ Still unverified:
 
 If a panel comes up inverted, the `Palette` is the wrong way round rather than
 the firmware being broken. See `Palette::INK_IS_ON` / `INK_IS_OFF`.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Thiago Holanda.
