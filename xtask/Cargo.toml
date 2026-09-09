@@ -16,6 +16,9 @@ authors = ["Thiago Holanda <unnamedd@gmail.com>"]
 repository = "https://github.com/XPUI-Framework/xpui-rp2040"
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
 
 # Its own workspace, and not a member of the one above.
@@ -26,3 +29,11 @@ publish = false
 # triple for the same reason. `docs-test/` next door is arranged identically
 # and was here first.
 [workspace]
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+too_long_first_doc_paragraph = "deny"
+
+[workspace.lints.rustdoc]
+unescaped_backticks = "deny"
+

@@ -15,21 +15,24 @@
 //! Each repository in the organisation has its own copy of this shape, holding
 //! its own list. **This file is the part that is meant to differ**; the modules
 //! under it are byte-identical, and `shared_files_agree` in `xpui-dev` hashes
-//! all seven across the nine, so a fix to the fence scanner cannot land in one
+//! all ten across the nine, so a fix to the fence scanner cannot land in one
 //! repository and not the rest.
 //!
 //! A check written and never listed below is a dead function, which clippy
-//! fails the build over. That is what a hand-written "is every check
-//! dispatched?" check used to do, and it does it better.
+//! fails the build over.
 
+mod agents;
 mod cargo;
 mod commands;
+mod comments;
 mod docs;
 mod faults;
 mod fences;
 mod paths;
 mod prose;
+mod readme;
 mod tree;
+mod workspaces;
 
 use std::process::ExitCode;
 
@@ -69,6 +72,38 @@ const NOT_COMPILED: [&str; 0] = [];
 /// Pages that are not a repository's front door and carry no banner.
 const NOT_A_FRONT_PAGE: [&str; 0] = [];
 
+/// The root README's headings, in order. Empty until this repository's front
+/// page is brought to the standard; then the eight.
+const README_ORDER: &[&str] = &[];
+const README_OPTIONAL: &[&str] = &["Which crate you want", "Requirements"];
+const NESTED_ORDER: &[&str] = &[
+    "Using it",
+    "Requirements",
+    "Checking it",
+    "Where next",
+    "License",
+];
+const NESTED_OPTIONAL: &[&str] = &["Requirements", "Where next"];
+
+/// `AGENTS.md` exists and `CLAUDE.md` is a symlink to it.
+const AGENTS_FILE: bool = false;
+
+/// Every publishable crate denies `missing_docs`. `true` here says so for
+/// none: nothing in this repository is published.
+const DOCUMENTED: bool = true;
+
+/// How long a comment may be. `None` is not adopted.
+const COMMENT_CAPS: Option<comments::Caps> = Some(comments::Caps {
+    doc: 15,
+    header: 15,
+    run: 10,
+});
+/// No comment is about the past.
+const NARRATION_CHECKED: bool = true;
+/// Which files the two comment checks read. `None` is every tracked source,
+/// manifest and C++ file outside `tests/`.
+const COMMENT_SCOPE: Option<&str> = None;
+
 /// The one bare-metal target, and it is required. There is no host build here
 /// to fall back on: an RP2040 HAL does not compile for a laptop, so this lint
 /// is the only thing that reads this code before a board does.
@@ -85,8 +120,7 @@ fn main() -> ExitCode {
         .expect("xtask/..");
     std::env::set_current_dir(root).expect("the repository root");
 
-    // A typo is not a check. The shell this replaced rejected an unknown
-    // argument, and a gate that silently treats `fx` as `check` is a gate that
+    // A typo is not a check: a gate that silently treats `fx` as `check`
     // reports a pass for a run nobody asked for.
     let (fix, everything) = match std::env::args().nth(1).as_deref() {
         None | Some("check") => (false, false),
@@ -105,9 +139,8 @@ fn main() -> ExitCode {
             Box::new(move || {
                 // Three workspaces, not one. `docs-test/` and `xtask/` are
                 // their own because `.cargo/config.toml` here retargets
-                // everything below the root at the board — so `--all` from the
-                // root reaches neither, and for a while nothing formatted or
-                // linted the gate itself.
+                // everything below the root at the board, so `--all` from the
+                // root reaches neither.
                 for manifest in ["Cargo.toml", "docs-test/Cargo.toml", "xtask/Cargo.toml"] {
                     let mut arguments = vec!["fmt", "--manifest-path", manifest, "--all"];
                     if !fix {
@@ -132,17 +165,45 @@ fn main() -> ExitCode {
             Box::new(|| prose::is_compiled(&NOT_COMPILED, &KNOWN_LANGUAGES)),
         ),
         ("documented paths resolve", Box::new(docs::doc_paths)),
-        ("rustdoc links resolve", Box::new(rustdoc_links)),
+        ("rustdoc links resolve", Box::new(workspaces::rustdoc_links)),
         (
             "documented commands resolve",
             Box::new(|| commands::resolve(&cargo::packages(), &[])),
         ),
         ("lint", Box::new(lint)),
-        ("the prose compiles", Box::new(docs_test)),
-        ("the gate's own tests", Box::new(gate_tests)),
+        ("the prose compiles", Box::new(workspaces::docs_test)),
+        ("the gate's own tests", Box::new(workspaces::gate_tests)),
         (
             "the nested clippy configs agree",
-            Box::new(nested_clippy_agrees),
+            Box::new(workspaces::nested_clippy_agrees),
+        ),
+        (
+            "README sections",
+            Box::new(|| {
+                readme::readme_sections(
+                    README_ORDER,
+                    README_OPTIONAL,
+                    NESTED_ORDER,
+                    NESTED_OPTIONAL,
+                    &NOT_A_FRONT_PAGE,
+                )
+            }),
+        ),
+        (
+            "AGENTS.md",
+            Box::new(|| agents::agents_file_exists(AGENTS_FILE)),
+        ),
+        (
+            "published crates deny missing_docs",
+            Box::new(|| tree::published_crates_deny_missing_docs(DOCUMENTED)),
+        ),
+        (
+            "comment blocks",
+            Box::new(|| comments::comment_blocks(COMMENT_CAPS, COMMENT_SCOPE)),
+        ),
+        (
+            "comment narration",
+            Box::new(|| comments::comment_narration(NARRATION_CHECKED, COMMENT_SCOPE)),
         ),
     ];
 
@@ -156,6 +217,14 @@ fn main() -> ExitCode {
             Box::new(firmware_links),
         )]);
     }
+
+    // Last, after every insert and extend, owning the names: a closure in
+    // the vector cannot borrow the vector.
+    let names: Vec<String> = gate.iter().map(|(n, _)| n.to_string()).collect();
+    gate.push((
+        "the gate is documented",
+        Box::new(move || agents::agents_documents_the_gate(&names)),
+    ));
 
     for (name, check) in gate.drain(..) {
         println!("\n==> {name}");
@@ -214,45 +283,11 @@ fn lint() -> Result<String, String> {
     notes.push("xtask on the host".into());
     Ok(notes.join(", "))
 }
-
-/// The checks' own unit tests.
+/// Clippy on the one bare-metal target, with warnings as errors.
 ///
-/// This repository has no host workspace to test — an RP2040 HAL does not
-/// compile for a laptop — so `cargo test` is not in the list above, and the
-/// gate's own tests would never run here without this line.
-fn gate_tests() -> Result<String, String> {
-    cargo::cargo(&[
-        "test",
-        "--manifest-path",
-        "xtask/Cargo.toml",
-        "--target",
-        &cargo::host_triple(),
-    ])
-}
-
-/// The tutorial, compiled.
-///
-/// `--target` is named explicitly: `.cargo/config.toml` above this directory
-/// sets the board as the default target for everything below it, and a doctest
-/// has to run somewhere it can run.
-fn docs_test() -> Result<String, String> {
-    cargo::cargo(&[
-        "test",
-        "--manifest-path",
-        "docs-test/Cargo.toml",
-        "--doc",
-        "--target",
-        &cargo::host_triple(),
-    ])
-}
-
-/// Clippy on each bare-metal target, with warnings as errors.
-///
-/// The host build never parses code behind `cfg(target_os = "none")` — no
-/// allocator, no panic handler — so these are the only gates that reach it
-/// before a firmware build does. Neither target has atomic compare-and-swap:
-/// load and store only, never `swap`, `fetch_or` or `compare_exchange`. The
-/// second is a second architecture rather than a stricter one.
+/// Nothing here compiles for a host, so this is the only gate that reads
+/// the code before a board does. The target has no atomic compare-and-swap:
+/// load and store only, never `swap`, `fetch_or` or `compare_exchange`.
 fn bare_metal(notes: &mut Vec<String>) -> Result<(), String> {
     {
         for (triple, required) in BARE_METAL {
@@ -302,81 +337,4 @@ fn firmware_links() -> Result<String, String> {
         ])?;
     }
     Ok("badger2040, tufty2040".into())
-}
-
-/// Rustdoc, for the board and for the two workspaces beside the root.
-///
-/// The board run is the one this repository could not do any other way: a
-/// doc comment behind `cfg(target_os = "none")` is not parsed by a host
-/// rustdoc, and this crate is nothing but such code.
-fn rustdoc_links() -> Result<String, String> {
-    let mut notes = Vec::new();
-    if cargo::target_installed("thumbv6m-none-eabi") {
-        cargo::rustdoc(&["--release", "--target", "thumbv6m-none-eabi"])?;
-        notes.push("thumbv6m-none-eabi".to_string());
-    } else {
-        notes.push("thumbv6m-none-eabi SKIPPED — rustup target add thumbv6m-none-eabi".into());
-    }
-    let host = cargo::host_triple();
-    for manifest in ["docs-test/Cargo.toml", "xtask/Cargo.toml"] {
-        cargo::rustdoc(&["--manifest-path", manifest, "--target", &host])?;
-        notes.push(format!("{manifest} on the host"));
-    }
-    Ok(notes.join(", "))
-}
-
-/// The nested workspaces lint under the same rules as the firmware.
-///
-/// Clippy reads the `clippy.toml` nearest the workspace root, and `docs-test/`
-/// and `xtask/` are their own workspaces — so without a copy each would lint
-/// under cargo's defaults rather than this organisation's `msrv`. `xpui-dev`
-/// compares the root file across every repository and cannot see these two:
-/// its list is one path, `clippy.toml`, and these are two directories down.
-///
-/// Which makes this the only thing that reads them, and the copies had a
-/// comment claiming otherwise.
-fn nested_clippy_agrees() -> Result<String, String> {
-    let root = std::fs::read_to_string("clippy.toml").map_err(|e| format!("  clippy.toml: {e}"))?;
-    let wanted: Vec<&str> = root
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty() && !l.starts_with('#'))
-        .collect();
-    if wanted.is_empty() {
-        return Err("clippy.toml sets nothing, so this would compare nothing".into());
-    }
-
-    let mut drifted = Vec::new();
-    let mut checked = Vec::new();
-    for nested in ["docs-test/clippy.toml", "xtask/clippy.toml"] {
-        let Ok(text) = std::fs::read_to_string(nested) else {
-            drifted.push(format!(
-                "  {nested} is missing, so that workspace lints under cargo's defaults"
-            ));
-            continue;
-        };
-        let here: Vec<&str> = text
-            .lines()
-            .map(str::trim)
-            .filter(|l| !l.is_empty() && !l.starts_with('#'))
-            .collect();
-        if here == wanted {
-            checked.push(nested);
-        } else {
-            drifted.push(format!("  {nested} sets different values from clippy.toml"));
-        }
-    }
-    if drifted.is_empty() {
-        Ok(format!(
-            "{} setting(s), in {}",
-            wanted.len(),
-            checked.join(" and ")
-        ))
-    } else {
-        Err(format!(
-            "{}\n\nEach nested workspace needs the root file's values, or it lints\n\
-             under different rules from the firmware one directory up.",
-            drifted.join("\n")
-        ))
-    }
 }
