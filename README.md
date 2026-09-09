@@ -209,6 +209,7 @@ flowchart BT
   rp2040["xpui-rp2040<br/>firmware"]
   esp32["xpui-esp32<br/>firmware"]
   cpp["xpui-cpp<br/>a C++ host"]
+  dev["xpui-dev<br/>the umbrella"]
   chrome --> xpui
   boards --> xpui
   backends --> xpui
@@ -232,6 +233,12 @@ flowchart BT
   esp32 --> gallery
   cpp --> xpui
   cpp --> backends
+  dev --> xpui
+  dev --> chrome
+  dev --> boards
+  dev --> backends
+  dev --> simulator
+  dev --> gallery
   style rp2040 stroke-width:3px
 ```
 

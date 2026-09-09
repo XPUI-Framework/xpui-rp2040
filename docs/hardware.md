@@ -134,7 +134,7 @@ and cost nothing in RAM. They are reachable from nothing but
 them from the binary and takes it to about 55% of its size. Worth knowing
 before porting this to a part
 with less room; see [`gallery/src/fonts.rs`](https://github.com/XPUI-Framework/xpui-gallery/blob/main/gallery/src/fonts.rs)
-for the measured comparison.
+for the figure, and that repository's `docs/design.md` for the measurement.
 
 These are measured from the allocated sections of a release ELF, not from the
 file on disk — an ELF carries debug information the board never sees.
@@ -155,3 +155,29 @@ chip select GP10, data/command GP11, write GP12, read GP13; data bus DB0–DB7
 on GP14–GP21 in order; backlight GP2, raised only after the first clear so the
 controller's power-on noise is never lit. GP27 is the battery-sense reference
 enable rather than a panel supply, and is left alone.
+
+## The release profile
+
+`strip = "debuginfo"` rather than `true`. `probe-rs run` locates the RTT
+control block by looking its symbol up in the ELF, and `strip = true` deletes
+the whole symbol table, so the boot log never appears and the failure looks
+like a firmware that printed nothing. DWARF still goes.
+
+It costs nothing on the part. The symbol table is in no loadable segment, so
+what is flashed is byte-identical either way, measured on both boards. The ELF
+on disk grows by about 100 kB, which is host disk and not flash.
+
+## One loop for both boards
+
+`run` is `run_async` with a blocking present wrapped as an async one that
+never suspends. Keeping one loop rather than two that would drift costs
++736 bytes on the Badger and +800 on the Tufty, most of it the display-loan
+machinery rather than the wrapper.
+
+Both boards go through the blocking one because neither has an async flush to
+wait on: `mipidsi` writes straight through, and `uc8151`'s published release
+spins on the BUSY pin. Its `asynch` module exists on git and has never been
+published — the last release was 2023 — so moving the Badger to it would mean
+a git dependency and an `embedded-hal` 1.0 migration for a driver nobody has
+cut a release of since. `run_async` is there for when that changes, and for
+any DMA-backed panel today.
