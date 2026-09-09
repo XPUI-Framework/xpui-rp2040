@@ -12,37 +12,27 @@ use rtt_target::{rprintln, rtt_init_print};
 #[global_allocator]
 static HEAP: LlffHeap = LlffHeap::empty();
 
-/// How much of the RP2040's 264 kB of SRAM `xpui` gets.
+/// How much of the RP2040's 256 kB striped SRAM `xpui` gets.
 ///
-/// It has to hold the leaked backend — which on the Badger carries the panel's
-/// own 4,736-byte framebuffer — the stack of live screens, and the view tree
-/// `body()` rebuilds on every frame that carries input. The busiest gallery
-/// screen is a few kilobytes of that, so 64 kB is around an order of magnitude
-/// of headroom while still leaving some 190 kB for the stack, the executor and
-/// statics.
-///
-/// Raise it before adding a screen that buffers an image. There is no PSRAM on
-/// either board to fall back on, and a first-fit allocator handed too little
+/// It holds the leaked backend — on the Badger, the panel's own 4,736-byte
+/// framebuffer — the stack of live screens, and the view tree `body()`
+/// rebuilds on every frame carrying input; the busiest gallery screen is a
+/// few kilobytes of that. Raise it before adding a screen that buffers an
+/// image: there is no PSRAM, and a first-fit allocator handed too little
 /// memory fragments long before it runs out.
 const HEAP_SIZE: usize = 64 * 1024;
 
 /// Opens the channel `probe-rs run` reads, so the board can be heard.
 ///
-/// Before this, every line below is written into a ring buffer nobody is
-/// holding and dropped, which is also what happens when the firmware is
-/// running from flash with no probe attached — the cost of a line nobody reads
-/// is a memcpy into a buffer that never fills.
-///
-/// Call it first, so a panic in `init_heap` still has somewhere to go.
+/// Call it first, so a panic in `init_heap` still has somewhere to go. With
+/// no probe attached, a line costs a memcpy into a ring buffer that never
+/// fills.
 pub fn init_log() {
     rtt_init_print!();
 }
 
-/// What the allocator has handed out and what is left, in bytes.
-///
-/// The only view either board has of its own memory. A first-fit allocator
-/// with 64 kB fragments long before it runs out, so the interesting number is
-/// how `free` moves frame to frame, not what it is once.
+/// What the allocator has handed out and what is left, in bytes: the only
+/// view either board has of its own memory.
 pub fn heap_used() -> (usize, usize) {
     (HEAP.used(), HEAP.free())
 }
@@ -73,11 +63,9 @@ pub fn park() -> ! {
 
 /// Says what happened, then stops.
 ///
-/// The message costs `core::fmt`, which the frame loop is kept clear of on
-/// purpose — but this path runs once and never again, and a board that dies
-/// without saying why is indistinguishable from one that is merely idle. That
-/// ambiguity is expensive: a half-drawn panel and a silent park look exactly
-/// like a layout bug from across a desk.
+/// The message costs `core::fmt`, which the frame loop is kept clear of — but
+/// this path runs once, and a board that dies without saying why is
+/// indistinguishable from one that is merely idle.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     rprintln!("PANIC: {}", info);

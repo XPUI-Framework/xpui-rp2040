@@ -12,7 +12,7 @@
 //! | Buttons | A GP12, B GP13, C GP14, up GP15, down GP11 |
 //! | SPI0 | clock GP18, data GP19 — the panel is write-only, so MISO is unused |
 //! | Panel | chip select GP17, data/command GP20, reset GP21, busy GP26 |
-//! | Board | 3V3 enable GP10, LED GP25 |
+//! | Board | 3V3 enable GP10 |
 
 #![no_std]
 #![no_main]
@@ -59,7 +59,6 @@ async fn main(_spawner: Spawner) {
 
     let mut spi_config = SpiConfig::default();
     spi_config.frequency = SPI_FREQUENCY;
-    // Transmit only: nothing on this bus ever answers.
     let spi = Spi::new_blocking_txonly(p.SPI0, p.PIN_18, p.PIN_19, spi_config);
 
     let mut display = Uc8151::new(

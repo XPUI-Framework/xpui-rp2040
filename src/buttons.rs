@@ -19,9 +19,8 @@ use xpui_eg::Backend;
 /// on both badges, it is what the person pressing one reads, and it keeps the
 /// row clear of [`Button::Right`], which is a direction and not a switch.
 ///
-/// Named fields rather than five positional arguments: they are all the same
-/// type, so a firmware that swaps two of them compiles cleanly and then
-/// behaves wrongly on hardware, which is the worst place to discover it.
+/// Named fields rather than positional: all five are one type, and a swap
+/// would compile.
 pub struct ButtonPins {
     pub a: Input<'static>,
     pub b: Input<'static>,
@@ -61,18 +60,12 @@ pub(crate) struct Buttons {
 impl Buttons {
     /// Asks the board what the key beside each pin sends.
     ///
-    /// **The firmware does not decide what a key means.** Both badges describe
-    /// five keys — `a`, `b` and `c` in `BADGE_FOOTER`, `Up` and `Dn` in
-    /// `BADGE_EDGE` — and what each sends. The names below are the only thing
-    /// tying a pin to one, and they are matched exactly: `down` is the field,
-    /// `Dn` is the board's name for the key, and only the second is looked up.
-    /// No other board is bound to these five — the Inky Frame's are `A` to `E`.
-    ///
-    /// A name this board does not carry resolves to `None`, and that switch is
-    /// sampled and silent. So each says what it resolved to on the way up,
-    /// printed by the same lookup that installs it, and `key up sends None` is
-    /// what a typo looks like. What no line can show is a pin behind the wrong
-    /// name: both sides agree, and only a thumb on the board disagrees.
+    /// **The firmware does not decide what a key means.** The names below are
+    /// matched exactly against the board's own key labels — `down` is the
+    /// field, `Dn` is the board's name — and a name the board does not carry
+    /// resolves to `None`, so that switch is sampled and silent. Each says
+    /// what it resolved to at boot, so `key up sends None` is what a typo
+    /// looks like; a pin behind the wrong name is what only a thumb can find.
     pub(crate) fn new(board: Board, pins: ButtonPins) -> Self {
         let sends = |label: &str| {
             board
@@ -90,9 +83,6 @@ impl Buttons {
         ]
         .map(|(label, pin)| {
             let button = sends(label);
-            // Said on the way up, where a key that resolved to nothing is a
-            // line rather than a switch that feels broken — the same reason the
-            // panel's size is printed beside the board's in `frame.rs`.
             rprintln!("xpui: key {} sends {:?}", label, button);
             Key::new(pin, button)
         });
@@ -102,18 +92,12 @@ impl Buttons {
 
     /// Samples every switch once, and reports only what changed.
     ///
-    /// Edges, not levels. `xpui`'s input is edge-based: a button reported as
-    /// pressed on every frame re-fires whatever it is on, so a finger resting
-    /// on Down would walk a list to the bottom in a fraction of a second.
-    ///
-    /// Four agreeing samples make a state change, so at the frame interval the
-    /// loop runs at a press settles in about 40 ms — long enough to swallow
-    /// contact bounce, short enough not to be felt.
-    ///
-    /// Every switch is reported, Back included. Whether finishing the root
-    /// screen is allowed is [`App::keep_root`](xpui::App::keep_root)'s answer,
-    /// not a pin's: withholding the key here would also stop a screen claiming
-    /// it and stop an open value being cancelled.
+    /// Edges, not levels: a button reported as pressed on every frame re-fires
+    /// whatever it is on, so a finger resting on Down would walk a list to the
+    /// bottom in a fraction of a second. Four agreeing samples make a state
+    /// change, about 40 ms at the frame interval. Every switch is reported,
+    /// Back included: whether finishing the root screen is allowed is
+    /// [`App::keep_root`](xpui::App::keep_root)'s answer, not a pin's.
     pub(crate) fn poll<D: DrawTarget>(&mut self, backend: &Backend<D>) {
         for key in &mut self.keys {
             // **Sampled first, and always.** A key that is skipped leaves its

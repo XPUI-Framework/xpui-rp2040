@@ -12,7 +12,7 @@
 //! | Buttons | A GP7, B GP8, C GP9, up GP22, down GP6 |
 //! | Panel | chip select GP10, data/command GP11, write GP12, read GP13 |
 //! | Data bus | DB0–DB7 on GP14–GP21, in order |
-//! | Board | backlight GP2, LED GP25 |
+//! | Board | backlight GP2 |
 //!
 //! GP27 is the battery-sense reference enable, not a panel supply — Pimoroni's
 //! own examples raise it only while reading the ADC — so it is left alone.
@@ -81,16 +81,13 @@ async fn main(_spawner: Spawner) {
 
     // The ST7789's framebuffer is 240x320 portrait and the Tufty's glass is
     // mounted a quarter turn from it, so the panel is described in its own
-    // orientation and then rotated. `Display::size` reports 320x240 after that,
-    // which is what `pimoroni::TUFTY_2040` says and what the chrome is sized for.
+    // orientation and then rotated: `Display::size` reports 320x240, which is
+    // what `pimoroni::TUFTY_2040` says. Inverted colour is the panel's
+    // polarity, not a choice: without it black and white swap.
     //
-    // Inverted colour is the panel's polarity, not a stylistic choice: without
-    // it black and white come out the wrong way round.
-    //
-    // Destructured rather than unwrapped: every pin on this interface is
-    // infallible, which leaves `InitError` with no inhabited variant, so the
-    // pattern is irrefutable. Should a future mipidsi give it one, this stops
-    // compiling instead of silently swallowing a failure.
+    // Destructured rather than unwrapped: every pin here is infallible, which
+    // leaves `InitError` with no inhabited variant, so the pattern is
+    // irrefutable — and stops compiling should a future mipidsi give it one.
     let Ok(display) = Builder::new(ST7789, interface)
         .display_size(240, 320)
         .orientation(Orientation::new().rotate(Rotation::Deg270))

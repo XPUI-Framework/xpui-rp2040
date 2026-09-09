@@ -2,8 +2,8 @@
 //!
 //! The same shape as the desktop simulator's — begin a frame, feed it input,
 //! tick, and paint only if the framework asked — with embassy where SDL was.
-//! Read `crates/backend/simulator/src/lib.rs` beside this: what differs is
-//! where the input comes from and what a paint costs.
+//! Read `xpui-simulator`'s `run.rs` against this: what differs is where the
+//! input comes from and what a paint costs.
 
 use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::draw_target::DrawTarget;
@@ -20,27 +20,22 @@ use crate::runtime::park;
 /// How often the loop wakes.
 ///
 /// Well under what either panel can show and well over what a thumb can do,
-/// and it sets the debounce window: four agreeing samples at this interval is
-/// 40 ms.
+/// and it sets the debounce window: four agreeing samples at this interval
+/// settle a press in 30–40 ms.
 const FRAME_INTERVAL: Duration = Duration::from_millis(10);
 
 /// Installs `display` as the host and runs `root` on it.
 ///
-/// `present` is what pushes the framebuffer to the panel, and it is called
-/// **only** when [`App::render_if_dirty`] painted something. On the Badger
-/// that call is close to a second of the display refreshing, so a loop that
-/// presented every frame would leave the panel permanently mid-update and the
-/// buttons permanently unread. A display that draws straight through — the
-/// Tufty's, over its parallel bus — passes a closure that does nothing,
-/// because by then the pixels have already reached the glass.
+/// `present` pushes the framebuffer to the panel, and is called **only** when
+/// [`App::render_if_dirty`] painted something: on the Badger that call is
+/// close to a second of the display refreshing, so presenting every frame
+/// would leave the panel permanently mid-update and the buttons unread. A
+/// display that draws straight through — the Tufty's, over its parallel bus
+/// — passes a closure that does nothing.
 ///
-/// **Both boards use this one**, because neither has an async flush to wait
-/// on: `mipidsi` writes straight through, and `uc8151`'s published release
-/// spins on the BUSY pin. Its `asynch` module exists on git and has never been
-/// published — the last release was 2023 — so moving the Badger to it would
-/// mean a git dependency and an `embedded-hal` 1.0 migration for a driver
-/// nobody has cut a release of since. [`run_async`] is there for when that
-/// changes, and for any DMA-backed panel today.
+/// Both boards use this one, because neither has an async flush to wait on:
+/// `mipidsi` writes straight through and the published `uc8151` spins on the
+/// BUSY pin. [`run_async`] is there for a DMA-backed panel.
 pub async fn run<D, S>(
     display: D,
     board: Board,
@@ -54,13 +49,8 @@ where
     D::Color: Sync,
     S: Screen + 'static,
 {
-    // One loop, not two. The blocking present is an async one that never
+    // One loop, not two: the blocking present is an async one that never
     // suspends.
-    //
-    // Not free: this change is +736 bytes on the Badger and +800 on the Tufty,
-    // measured against the commit before it. Most of that is the loan
-    // machinery rather than this wrapper — the two were not isolated — and on
-    // a 2 MB flash it buys one loop instead of two that would drift.
     run_async(
         display,
         board,
@@ -120,9 +110,7 @@ where
     let mut buttons = Buttons::new(board, pins);
 
     // The application composes the backend, because nothing below it knows
-    // what a board is: measurements come from the panel's size and the board's
-    // own UI scale, words from its size, the
-    // key row and the Left/Right pair from the hardware.
+    // what a board is.
     let backend = wire(display, board, palette).leaked();
     // Safety: one panel, one executor task, and nothing has rendered yet.
     unsafe { xpui::host::install(backend) };

@@ -3,11 +3,6 @@
 //! `memory.x` has to be on it, and it has to get there from `OUT_DIR`: the
 //! linker runs from the directory cargo invokes it in, which is not the one
 //! holding this file.
-//!
-//! This used to carry a second job — a `device` cfg every item in the crate
-//! sat behind, so that the workspace's host gates saw an empty crate rather
-//! than an RP2040 HAL that cannot compile for a laptop. The crate is its own
-//! workspace now and there is no host build to hide from.
 
 use std::env;
 use std::fs;

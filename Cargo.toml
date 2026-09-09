@@ -1,9 +1,13 @@
-# Its own repository now, and still its own workspace. It was excluded from the
-# monorepo for a reason that has not changed: membership meant a host build,
-# and an RP2040 HAL cannot compile for a laptop, so every item here sat behind
-# a `device` cfg that no host test could reach and no editor could resolve.
-# Standing alone costs a second lock file and the metadata below.
+# Its own workspace: an RP2040 HAL cannot compile for a laptop, so nothing
+# here is ever built for the host.
 [workspace]
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+too_long_first_doc_paragraph = "deny"
+
+[workspace.lints.rustdoc]
+unescaped_backticks = "deny"
 
 [package]
 name = "xpui-rp2040"
@@ -16,11 +20,12 @@ repository = "https://github.com/XPUI-Framework/xpui-rp2040"
 readme = "README.md"
 publish = false
 
-# `test`/`bench` off on every target: a test harness needs libtest, which does
-# not exist for `thumbv6m-none-eabi`, so leaving them on makes
-# `--all-targets` fail on the only target this crate compiles for. What is
-# testable here lives in xpui and in the gallery, both of which are tested on
-# the host.
+[lints]
+workspace = true
+
+# `test`/`bench` off on every target: libtest does not exist for
+# `thumbv6m-none-eabi`, so leaving them on makes `--all-targets` fail on the
+# only target this crate compiles for.
 [lib]
 name = "xpui_rp2040"
 path = "src/lib.rs"
@@ -39,8 +44,8 @@ path = "src/bin/tufty2040.rs"
 test = false
 bench = false
 
-# Unconditional, because nothing here builds for a laptop and nothing asks it
-# to. `.cargo/config.toml` sets the target; there is no host build to satisfy.
+# Unconditional: there is no host build to satisfy, and `.cargo/config.toml`
+# sets the target.
 [dependencies]
 xpui = { git = "https://github.com/XPUI-Framework/xpui-framework", branch = "main" }
 # Pimoroni only: these two binaries flash a Badger and a Tufty.
@@ -67,33 +72,23 @@ embassy-time = "0.5.1"
 
 cortex-m = "0.7.7"
 cortex-m-rt = "0.7.5"
-# `llff` only: the default set also pulls in `tlsf`, which wants nightly.
+# `llff` only: the default set also pulls in `tlsf`, which nothing here uses.
 embedded-alloc = { version = "0.7.0", default-features = false, features = ["llff"] }
 debouncr = "0.2.2"
 
 # A way for a board to say what happened. `probe-rs run` — the runner
-# `.cargo/config.toml` names — picks the channel up and prints it in the
-# terminal that flashed the firmware, which needs the symbol table the profile
-# below keeps. Without any of this the panic handler parks silently and a dead
-# board looks exactly like an idle one, which cost a day of guessing at a
-# photograph.
+# `.cargo/config.toml` names — prints the channel in the terminal that flashed
+# the firmware, which needs the symbol table the profile below keeps. Without
+# it a dead board looks exactly like an idle one.
 rtt-target = "0.6"
 
 # The panels.
 uc8151 = "0.2.0"   # Badger 2040, monochrome e-ink over SPI
 mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
 
-# Inherited from the workspace root until this crate stood alone.
-#
-# `strip = "debuginfo"` rather than `true`: `probe-rs run` locates the RTT
-# control block by looking its symbol up in the ELF, and `strip = true` deletes
-# the whole symbol table, so the boot log never appears and the failure looks
-# like a firmware that printed nothing. DWARF still goes.
-#
-# It costs **nothing on the part**. The symbol table is in no loadable segment,
-# so what is flashed is byte-identical either way: 223,972 bytes on the Badger
-# and 229,716 on the Tufty, measured both ways. The ELF on disk grows by about
-# 100 kB, which is host disk and not flash.
+# `strip = "debuginfo"` rather than `true`: `probe-rs run` finds the RTT
+# control block by its symbol, and `true` deletes the whole symbol table, so
+# the boot log never appears.
 [profile.release]
 panic = "abort"
 # Size over speed: flash is the scarce resource on a 2 MB part, not cycles.
