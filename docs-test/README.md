@@ -1,7 +1,6 @@
-# `xpui-rp2040-docs`
+[![CI](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml/badge.svg)](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 
-> ⚠️ **Under heavy development.** Not production-ready. The API can break
-> without notice. Use at your own risk.
+# `xpui-rp2040-docs`
 
 A crate with no code, whose only job is to compile this repository's tutorial.
 

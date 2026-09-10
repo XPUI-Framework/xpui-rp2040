@@ -1,9 +1,10 @@
+[![CI](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml/badge.svg)](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 # `xpui-rp2040`
 
-> ⚠️ **Under heavy development.** Not production-ready. The API can break
-> without notice. Use at your own risk.
-
-[![CI](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml/badge.svg)](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+> [!WARNING]
+> Under heavy development. Not production-ready. The API can break without
+> notice. Use at your own risk.
 
 Two firmware binaries that flash [the gallery](https://github.com/XPUI-Framework/xpui-gallery/tree/main/gallery)
 to a Pimoroni board: the same screens the simulator runs, the same crate, and
