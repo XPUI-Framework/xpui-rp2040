@@ -21,11 +21,23 @@ use xpui_eg::Backend;
 ///
 /// Named fields rather than positional: all five are one type, and a swap
 /// would compile.
+///
+/// **Every pin must be `Pull::Down`.** Polling reads a press as `is_high`,
+/// so a pin pulled up compiles, links, and inverts all five keys: the board
+/// reports a press for every switch that is *not* held.
 pub struct ButtonPins {
+    /// The switch printed `a`, leftmost along the bottom edge.
     pub a: Input<'static>,
+    /// The switch printed `b`, between `a` and `c` along the bottom edge.
     pub b: Input<'static>,
+    /// The switch printed `c`, rightmost along the bottom edge.
     pub c: Input<'static>,
+    /// The upper of the two switches on the right edge. The bezel labels it
+    /// `Up`.
     pub up: Input<'static>,
+    /// The lower of the two switches on the right edge. The bezel labels it
+    /// **`Dn`**, not `Down`: the label is what resolves the pin, and spelling
+    /// it out leaves that switch dead on hardware.
     pub down: Input<'static>,
 }
 

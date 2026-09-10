@@ -1,12 +1,13 @@
 # Working on the RP2040 firmware
 
 Everything past a first flash: what the keys do, why this crate is its own
-workspace, where the memory goes, and which pin is which.
+workspace, where the memory goes, which pin is which, what the release profile
+keeps, why one loop serves both boards, and what running it proved.
 
-[`../README.md`](../README.md) is the front page — what you need, how to build,
-how to flash.
+[`../README.md`](../README.md) is the front page — how to build, how to flash,
+what you need.
 
-## Using it
+## The keys
 
 Five buttons, mapped by meaning rather than by position:
 
@@ -45,12 +46,12 @@ firmware calls `App::keep_root()`, so `Button::Back` reaches the screen as it
 always does — a screen may claim it, an open value cancels with it — and only
 the last of its three meanings, finishing the screen, is declined at the root.
 
-Withholding the key instead is what this firmware used to do, and it took the
-other two meanings with it: a screen could not dismiss its own picker, and a
-value opened on a root screen could be committed but never cancelled. The
-reason for the guard was real — finishing the last screen empties the stack,
-ends the frame loop and parks the board, which from the outside is
-indistinguishable from a crash — but the fix belongs where the stack is.
+Withholding the key instead takes the other two meanings with it: a screen
+cannot dismiss its own picker, and a value opened on a root screen can be
+committed but never cancelled. The reason to reach for the guard is real —
+finishing the last screen empties the stack, ends the frame loop and parks
+the board, which from the outside is indistinguishable from a crash — but the
+fix belongs where the stack is.
 
 Each is debounced over four samples of a 10 ms loop and reported as an *edge*,
 because `xpui`'s input is edge-based: a button reported as held on every frame
@@ -63,15 +64,16 @@ quickest waveform that leaves text crisp, and the loop only repaints when
 
 ## Its own workspace
 
-This crate is **excluded** from the repository's workspace, and that is what
-makes it ordinary code you can open and read.
+This crate is the workspace root, and `docs-test/` and `xtask/` are workspaces
+of their own rather than members of it. That is what makes the firmware
+ordinary code you can open and read.
 
-A workspace member is built for the host by `cargo clippy --workspace` and
-`cargo test --workspace`, and an RP2040 HAL does not compile for a laptop. The
-way out used to be a `device` cfg every item sat behind, so that off the board
-the crate was empty — which also meant no test could reach it and an editor
-showed nothing. Three mutations to the button mapping at once passed every
-check in the repository.
+A member is built for the host by `cargo clippy --workspace` and `cargo test
+--workspace`, and an RP2040 HAL does not compile for a laptop. The alternative
+is a `device` cfg every item sits behind, so that off the board the crate is
+empty — which also means no test can reach it and an editor shows nothing.
+Three mutations to the button mapping at once would pass every check in the
+repository.
 
 Standing alone, its dependencies are unconditional and there is no cfg to
 reason about. Point an editor at this directory and it works.
@@ -115,8 +117,8 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 221 kB of 2 MB | 94 kB of 256 kB |
-| `tufty2040` | 227 kB of 8 MB | 67 kB of 256 kB |
+| `badger2040` | 225 kB of 2 MB | 94 kB of 256 kB |
+| `tufty2040` | 230 kB of 8 MB | 66 kB of 256 kB |
 
 Of the Badger's 94 kB, 64 kB is the heap and **29 kB is the embassy task pool**
 — a `static` sized from the frame loop's future, which holds the panel driver
@@ -137,7 +139,9 @@ with less room; see [`gallery/src/fonts.rs`](https://github.com/XPUI-Framework/x
 for the figure, and that repository's `docs/design.md` for the measurement.
 
 These are measured from the allocated sections of a release ELF, not from the
-file on disk — an ELF carries debug information the board never sees.
+file on disk — an ELF carries debug information the board never sees. Flash is
+`.vector_table` + `.text` + `.rodata` + `.data` + `.boot2`; RAM is `.data` +
+`.bss`. Measured on 2026-09-10; re-measure rather than trust them.
 
 ## Pins
 
@@ -181,3 +185,57 @@ published — the last release was 2023 — so moving the Badger to it would mea
 a git dependency and an `embedded-hal` 1.0 migration for a driver nobody has
 cut a release of since. `run_async` is there for when that changes, and for
 any DMA-backed panel today.
+
+## What running it proved
+
+**Both boards have been run**, over a debug probe, and the firmware reports
+what it finds on the way up:
+
+```text
+xpui: Badger 2040 296x128, panel 296x128
+xpui: key a sends Some(Back)
+xpui: key b sends Some(Confirm)
+xpui: key c sends None
+xpui: key Up sends Some(Up)
+xpui: key Dn sends Some(Down)
+xpui: first frame up, heap 5308 of 65536 used
+```
+
+A mismatch between the first two sizes is a driver configured a quarter turn
+out, which lays out plausibly and puts the screen in a corner of the glass. It
+costs one line to say so and an afternoon to find otherwise.
+
+The five key lines are the same idea: each is what the board answered for a
+name this firmware wires. They catch a name it does not carry — that key
+resolves to `None` and is silent — and they cannot catch a pin behind the wrong
+name, which is what pressing all five is for. Both boards have been pressed
+through all five, and `a` and `b` were checked as the pair most worth getting
+backwards.
+
+`cargo run --release --bin badger2040` shows it, with no extra flag — which
+is what [the release profile](#the-release-profile) keeping the symbol table
+buys.
+
+Three faults came out of that first session and are fixed:
+
+| | |
+|---|---|
+| Auto-repeat counted a panel refresh as a held key | one tap of Down walked the selection several rows. `Runtime` no longer credits a gap it could not see through |
+| `Back` on the root screen parked the board | it emptied the screen stack, ended the loop, and looked exactly like a crash. `App::keep_root()` now declines the pop; the key is still delivered, so a screen can claim it and an open value still cancels with it |
+| `mipidsi` outran the ST7789 over the parallel bus | its repeated-pixel shortcut pulses the write strobe at ~30 ns against a 66 ns minimum. Any pixel whose two bytes match takes it — 256 of them, ink and background among them — so fills came out as noise while text stayed crisp. See `PacedFill` in `xpui-embedded-graphics` |
+
+**The heap figure is measured, not reasoned** — 5,308 bytes on the Badger and
+592 on the Tufty, of 65,536. One sample, of the root menu at boot: it says the
+reservation in `src/runtime.rs` is generous, not that it is generous under every
+screen. A screen that buffers an image has not been tried.
+
+Two things a probe cannot reach, for whoever gets there next:
+
+- **Battery operation.** Both boards have been run over USB only, so the
+  Badger's GP10 3V3 enable — [the pin that *is* the rail](#pins) on battery —
+  has never been exercised where it matters.
+- **Anything about the Tufty's colour rendering** beyond ink and background.
+  The framework paints in two colours and the panel does 65,536.
+
+If a panel comes up inverted, the `Palette` is the wrong way round rather than
+the firmware being broken. See `Palette::INK_IS_ON` / `INK_IS_OFF`.

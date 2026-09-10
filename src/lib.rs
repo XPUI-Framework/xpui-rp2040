@@ -13,6 +13,7 @@
 //! framework asks it to.
 
 #![no_std]
+#![deny(missing_docs)]
 
 extern crate alloc;
 

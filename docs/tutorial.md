@@ -279,5 +279,5 @@ meet it on your own board:
 
 What has *not* been tried is battery operation: both boards have only been run
 over USB, where the Badger's GP10 holds up a rail the USB supply is feeding
-anyway. See [the README's pin tables](../README.md#pins) for what every pin on
+anyway. See [the pin tables](hardware.md#pins) for what every pin on
 both boards does.

@@ -7,6 +7,14 @@ on:
   push:
     branches: [main]
   pull_request:
+  # By hand, so a rotated token or a changed runner can be checked without a
+  # fake commit.
+  workflow_dispatch:
+
+# Read the checkout and nothing else; the gate writes nowhere. The sibling
+# fetch below carries its own token.
+permissions:
+  contents: read
 
 # A second push does not pay for the first.
 concurrency:
@@ -31,10 +39,10 @@ jobs:
             url."https://x-access-token:${{ secrets.XPUI_CI_TOKEN }}@github.com/".insteadOf \
             "https://github.com/"
 
-      # `rust-toolchain.toml` pins the channel, the components and these
-      # targets, so rustup installs them on the first cargo call. They are
-      # named again because the gate *skips* a lint whose target is missing
-      # rather than failing — right on a laptop, wrong here.
+      # `rust-toolchain.toml` pins the channel, the components and the
+      # board's target, so rustup installs them on the first cargo call.
+      # Named again so a runner image that ships a partial toolchain fails
+      # here, where the reason is one line up, rather than inside the gate.
       - name: Install Rust
         run: |
           rustup show active-toolchain
