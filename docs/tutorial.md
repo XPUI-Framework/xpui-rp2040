@@ -1,15 +1,17 @@
 # Your first screen on a board
 
-You have a Badger 2040 — 296×128 of monochrome e-ink, five buttons, 2 MB of
+You have a Badger 2040 — 296×128 of monochrome e-ink, five buttons, 2 MiB of
 flash, no touchscreen. This puts a screen on it.
 
 It assumes you have written one for the simulator already;
 [the framework's tutorial](https://github.com/XPUI-Framework/xpui-framework/blob/main/docs/tutorial.md) is that, and
 nothing here repeats it. **What is different on a board is the subject.**
 
-Every Rust block below is compiled by `cargo test`. The device-only ones — an
-embassy entry point, a flash command — are fenced `text`, and each says why it
-cannot be compiled here.
+Every Rust block below is a doctest in `docs-test/`, run for the host triple
+by the command in [its README](../docs-test/README.md#using-it); a bare
+`cargo test` builds for the board and compiles none of them. The device-only
+ones — an embassy entry point, a flash command — are fenced `text`, and each
+says why it cannot be compiled here.
 
 ## Nothing about the screen changes
 
@@ -164,7 +166,7 @@ On a device you own the loop. It is short, and every line of it is there for a
 reason that costs you if you drop it:
 
 ```text
-loop {
+while app.is_running() {
     backend.begin_frame(now_millis());   // advance the clock, clear input edges
     buttons.poll(backend);               // your GPIO -> logical buttons
 
@@ -179,8 +181,9 @@ loop {
 ```
 
 Fenced `text` because it is the body of an `async fn` that needs embassy and a
-panel — [`src/frame.rs`](../src/frame.rs) is the compiled version, and it is
-this with the types filled in.
+panel. [`src/frame.rs`](../src/frame.rs) is the compiled version: the same
+steps, but it presents through `loan_display`, so that one loop also serves a
+driver that suspends — the third point below.
 
 Three things about it:
 
@@ -199,13 +202,14 @@ the Badger does not need it, because the published `uc8151` blocks.
 
 ## 4. What you have to fit in
 
-2 MB of flash and 264 kB of SRAM, and the framework does not hide either.
+2 MiB of flash and 256 KiB of RAM the linker can use, and the framework does
+not hide either.
 
 | | |
 |---|---|
-| Heap | 64 kB, in [`src/runtime.rs`](../src/runtime.rs) — the leaked backend, the screen stack, and the view tree `body()` rebuilds every frame |
+| Heap | 64 KiB, in [`src/runtime.rs`](../src/runtime.rs) — the leaked backend, the screen stack, and the view tree `body()` rebuilds every frame |
 | The Badger's framebuffer | 4,736 bytes, inside the backend |
-| The whole firmware | around 220 kB of flash |
+| The whole firmware | around 225 KiB of flash — [measured, with the RAM](hardware.md#memory) |
 
 The rule that keeps you inside it: **`body()` runs on every paint and on every
 frame carrying input.** Build `String`s when the screen is built, not while
@@ -249,7 +253,8 @@ can do.
 
 Run both from [this repository's root](../), whose `.cargo/config.toml` sets
 the target and the runner — so neither line needs `--target`, and `cargo run`
-reaches for a debug probe on its own.
+reaches for a debug probe on its own. Installing `probe-rs` and `elf2uf2-rs`
+is one `cargo install` each, in [the README](../README.md#using-it).
 
 ## What has been proven, and where
 

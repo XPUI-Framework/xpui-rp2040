@@ -1,6 +1,11 @@
 [![CI](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml/badge.svg)](https://github.com/XPUI-Framework/xpui-rp2040/actions/workflows/ci.yml) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# `xpui-rp2040`
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-black.png">
+  <img src="assets/logo-white.png" alt="XPUI" width="64" height="64">
+</picture>
+
+# MCU: RP2040
 
 > [!WARNING]
 > Under heavy development. Not production-ready. The API can break without
@@ -17,6 +22,8 @@ button handling and the heap are shared.
 | `badger2040` | [Badger 2040](https://shop.pimoroni.com/products/badger-2040) | 296x128 monochrome e-ink | UC8151 over SPI |
 | `tufty2040` | [Tufty 2040](https://shop.pimoroni.com/products/tufty-2040) | 320x240 colour IPS LCD | ST7789v over an 8-bit parallel bus |
 
+Every document in this repository is listed in [docs/README.md](docs/README.md).
+
 ## Using it
 
 For a firmware, using it is building it and flashing it. Both binaries:
@@ -27,8 +34,9 @@ cargo build --release --bin tufty2040
 ```
 
 No `--target`: `.cargo/config.toml` sets `thumbv6m-none-eabi` for every
-command run at this repository's root or below, which is every command here.
-Naming it as well changes nothing.
+`cargo build` and `cargo run` at this repository's root or below. Naming it as
+well changes nothing. `cargo install` ignores that setting, so the tools below
+still build for your laptop.
 
 The ELF lands in `target/thumbv6m-none-eabi/release/`. This crate
 is its own workspace, so it has a `target/` of its own — see
@@ -51,7 +59,7 @@ elf2uf2-rs -d target/thumbv6m-none-eabi/release/badger2040
 `-d` converts and copies in one step; the board reboots into the firmware by
 itself. Without `-d` you get a `.uf2` beside the ELF to drag across yourself.
 
-**Flash with a probe.** From this directory:
+**Flash with a probe.** From the repository root:
 
 ```bash
 cargo install probe-rs-tools
@@ -112,15 +120,6 @@ holding nothing it does not run — and one command reaches all three of this
 repository's workspaces. How a change is reviewed is in
 [docs/contributing.md](docs/contributing.md).
 
-## Where next
-
-| | |
-|---|---|
-| [docs/hardware.md](docs/hardware.md) | everything past a first flash: what each key does, why this is its own workspace, where the memory goes, the pins, the release profile, one loop for both boards, and what running it proved |
-| [docs/tutorial.md](docs/tutorial.md) | your first screen on a board: a board is data, the palette trap, and the panel driver seam — compiled by `docs-test/` |
-| [docs/contributing.md](docs/contributing.md) | the three workspaces, the target, the gate, the five review steps, and how a commit is written |
-| [docs-test/README.md](docs-test/README.md) | the crate with no code that compiles the tutorial, and why it needs the host triple named |
-
 ## Where it sits
 
 Every arrow is a dependency in a `Cargo.toml`, and they all point inward
@@ -130,7 +129,7 @@ knowing it exists, and a firmware reaches whatever it needs directly rather
 than through whoever happens to sit above it.
 
 ```mermaid
-flowchart BT
+flowchart TD
   xpui["xpui<br/>the framework"]
   chrome["xpui-chrome<br/>components"]
   boards["xpui-boards<br/>seven devices"]

@@ -13,7 +13,7 @@ Five buttons, mapped by meaning rather than by position:
 
 | Key | Badger | Tufty | The board says it sends |
 |---|---|---|---|
-| `a` | GP12 | GP7 | `Back` — **ignored on the root screen**, see below |
+| `a` | GP12 | GP7 | `Back` — **never finishes the root screen**, see below |
 | `b` | GP13 | GP8 | `Confirm` — opens a row, commits a dialog |
 | `c` | GP14 | GP9 | nothing |
 | `Up` | GP15 | GP22 | `Up` |
@@ -80,9 +80,9 @@ reason about. Point an editor at this directory and it works.
 
 The cost is a lock file and a `target/` of its own — and, less obviously, that
 **this repository holds three workspaces rather than one**. `.cargo/config.toml`
-makes `thumbv6m-none-eabi` the default target for everything below the root, so
-`docs-test/` and `xtask/` are each their own workspace and each names the host
-triple for itself. That is why the gate reaches all three by name:
+makes `thumbv6m-none-eabi` the default target for everything below the root,
+`docs-test/` and `xtask/` included, so neither names a triple: the gate passes
+the host triple whenever it builds them. It also reaches all three by name:
 
 ```bash
 cargo fmt --manifest-path Cargo.toml --all --check
@@ -95,21 +95,20 @@ cargo clippy --release --all-targets --target thumbv6m-none-eabi -- -D warnings
 Breaking the firmware on purpose fails it — that is checked, not assumed.
 
 Running only the two lines a reader would guess at — `cargo fmt --check` and
-the clippy above — leaves `docs-test/` and `xtask/` unformatted and unlinted,
-which is exactly what happened while this gate was being written.
+the clippy above — leaves `docs-test/` and `xtask/` unformatted and unlinted.
 
 **Tests still do not run here**: a test harness needs libtest, which does not
 exist for `thumbv6m-none-eabi`. What is testable belongs in a crate that
-compiles for the host — which is why `PacedFill` now lives in
+compiles for the host — which is why `PacedFill` lives in
 `xpui-embedded-graphics`, where a fake `DrawTarget` proves the one property it
 exists for.
 
 ## Memory
 
-`memory.x` declares 2 MB of flash — what a Badger has; a Tufty has 8 MB and is
-happy with less being claimed — and the RP2040's 256 kB striped RAM bank.
+`memory.x` declares 2 MiB of flash — what a Badger has; a Tufty has 8 MiB and
+is happy with less being claimed — and the RP2040's 256 KiB striped RAM bank.
 
-The heap is 64 kB, in `src/runtime.rs`, with the reasoning written next to it.
+The heap is 64 KiB, in `src/runtime.rs`, with the reasoning written next to it.
 It holds the leaked backend (which on the Badger carries the panel's own
 4,736-byte framebuffer), the stack of live screens, and the view tree `body()`
 rebuilds each frame. There is room to raise it — the whole allocated footprint
@@ -117,19 +116,19 @@ of a release build is:
 
 | | Flash | RAM (`.data` + `.bss`) |
 |---|---|---|
-| `badger2040` | 225 kB of 2 MB | 94 kB of 256 kB |
-| `tufty2040` | 230 kB of 8 MB | 66 kB of 256 kB |
+| `badger2040` | 225 KiB of 2 MiB | 94 KiB of 256 KiB |
+| `tufty2040` | 230 KiB of 8 MiB | 66 KiB of 256 KiB |
 
-Of the Badger's 94 kB, 64 kB is the heap and **29 kB is the embassy task pool**
-— a `static` sized from the frame loop's future, which holds the panel driver
-by value while `run` hands it on. The Tufty's is 1 kB. On the Badger that pool
-is the largest thing after the heap and the first place to look if RAM runs
-short; note it is six times the 4,736-byte framebuffer it carries, so shrinking
-the driver saves more than its own size.
+Of the Badger's 94 KiB, 64 KiB is the heap and **28 KiB is the embassy task
+pool** — a `static` sized from the frame loop's future, which holds the panel
+driver by value while `run` hands it on. The Tufty's is 624 bytes. On the
+Badger that pool is the largest thing after the heap and the first place to
+look if RAM runs short; note it is six times the 4,736-byte framebuffer it
+carries, so shrinking the driver saves more than its own size.
 
 The rest of RAM is the stack, which grows down from the top.
 
-**Most of that flash is type.** Around 100 kB of it is the two extra typefaces
+**Most of that flash is type.** Around 100 KiB of it is the two extra typefaces
 the gallery registers — Courier and Century — which are bitmaps in `.rodata`
 and cost nothing in RAM. They are reachable from nothing but
 `gallery::fonts::FAMILIES`, so shortening that list to `&[&HELVETICA]` drops
@@ -141,7 +140,8 @@ for the figure, and that repository's `docs/design.md` for the measurement.
 These are measured from the allocated sections of a release ELF, not from the
 file on disk — an ELF carries debug information the board never sees. Flash is
 `.vector_table` + `.text` + `.rodata` + `.data` + `.boot2`; RAM is `.data` +
-`.bss`. Measured on 2026-09-10; re-measure rather than trust them.
+`.bss`; the task pool is the size of its `POOL` symbol. Measured on
+2026-09-13; re-measure rather than trust them.
 
 ## Pins
 
@@ -169,7 +169,7 @@ like a firmware that printed nothing. DWARF still goes.
 
 It costs nothing on the part. The symbol table is in no loadable segment, so
 what is flashed is byte-identical either way, measured on both boards. The ELF
-on disk grows by about 100 kB, which is host disk and not flash.
+on disk grows by about 100 KiB, which is host disk and not flash.
 
 ## One loop for both boards
 

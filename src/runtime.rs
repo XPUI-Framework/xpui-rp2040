@@ -12,7 +12,7 @@ use rtt_target::{rprintln, rtt_init_print};
 #[global_allocator]
 static HEAP: LlffHeap = LlffHeap::empty();
 
-/// How much of the RP2040's 256 kB striped SRAM `xpui` gets.
+/// How much of the RP2040's 256 KiB striped SRAM `xpui` gets.
 ///
 /// It holds the leaked backend — on the Badger, the panel's own 4,736-byte
 /// framebuffer — the stack of live screens, and the view tree `body()`

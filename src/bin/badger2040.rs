@@ -1,9 +1,9 @@
 //! The gallery on a Pimoroni Badger 2040.
 //!
 //! 296x128 of monochrome e-ink behind a UC8151, three buttons along the
-//! bottom edge and two on the right, 2 MB of flash and no touchscreen. A full refresh is close to a
-//! second, which is why the loop paints only what changed and why `LUT::Fast`
-//! is worth the ghosting it leaves behind.
+//! bottom edge and two on the right, 2 MiB of flash and no touchscreen. A
+//! full refresh is close to a second, which is why the loop paints only what
+//! changed and why `LUT::Fast` is worth the ghosting it leaves behind.
 //!
 //! # Pins
 //!

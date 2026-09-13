@@ -3,13 +3,13 @@
 # flag.
 #
 # This crate is the repository, so "here" is the root and every build reads
-# this file. It stays its own workspace because an RP2040 HAL cannot compile
-# for a laptop, which is what kept it out of the monorepo's — the reason
-# outlived the monorepo.
+# this file. It is its own workspace because an RP2040 HAL cannot compile for
+# a laptop.
 #
-# `docs-test/` below it is a second workspace and does *not* inherit the target
-# above: it compiles this repository's prose on the host, and names the host
-# triple itself for exactly that reason.
+# Discovery follows directories, not workspaces: `docs-test/` and `xtask/`
+# inherit this target too, and no committed file can name "the host" instead.
+# A command that must build for the laptop passes `--target` itself, as
+# `build-and-test.sh` and `docs-test/README.md` do.
 
 [build]
 target = "thumbv6m-none-eabi" # Cortex-M0+

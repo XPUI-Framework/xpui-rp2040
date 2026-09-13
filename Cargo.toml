@@ -96,7 +96,7 @@ mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
 # the boot log never appears.
 [profile.release]
 panic = "abort"
-# Size over speed: flash is the scarce resource on a 2 MB part, not cycles.
+# Size over speed: flash is the scarce resource on a 2 MiB part, not cycles.
 opt-level = "z"
 lto = true
 codegen-units = 1

@@ -31,8 +31,9 @@ The checks are listed in [`AGENTS.md`](../AGENTS.md) and implemented in
 before pushing a change to the loop, the buttons or the runtime.
 
 What bites here — no atomic compare-and-swap on Cortex-M0+, key labels that
-resolve a real pin, and `ButtonPins` needing every pin pulled down — is in
-`AGENTS.md`'s `## Style that bites here`, once.
+resolve a real pin — is in `AGENTS.md`'s `## Style that bites here`, once.
+That every pin in `ButtonPins` must be pulled down is written on the type, in
+[`src/buttons.rs`](../src/buttons.rs).
 
 ## The review
 

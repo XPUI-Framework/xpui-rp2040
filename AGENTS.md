@@ -46,8 +46,9 @@ before pushing anything the linker could reject.
 - **`the prose compiles`** — `docs-test/`'s doctests, run for the host
   triple, because the firmware crate cannot run a doctest on a laptop.
   `xpui-esp32` has a stage of the same name; the host triple is this one's.
-- `published crates deny missing_docs` prints `no publishable crates`, this
-  repository's permanent truth; `#![deny(missing_docs)]` is on anyway.
+- **`published crates deny missing_docs`** runs in every repository; what is
+  particular here is its answer, `no publishable crates`, which is permanent.
+  `#![deny(missing_docs)]` is on anyway.
 
 ## Style that bites here
 
@@ -56,7 +57,7 @@ before pushing anything the linker could reject.
   three. The gate reaches all of them.
 - **Cortex-M0+ has no atomic compare-and-swap.** Load and store only; never
   `swap`, `fetch_or` or `compare_exchange`.
-- **`no_std`, `alloc` from a 64 kB first-fit heap.** No `format!` on the
+- **`no_std`, `alloc` from a 64 KiB first-fit heap.** No `format!` on the
   frame path. The boot log and the panic handler pay for `core::fmt`; the
   loop must not.
 - **The key labels are what the hardware sends**: a pin is resolved by
@@ -75,8 +76,9 @@ before pushing anything the linker could reject.
 | Document | Proven by |
 |---|---|
 | [`README.md`](README.md), [`docs-test/README.md`](docs-test/README.md) | their paths and commands resolve; neither carries a `rust` fence |
+| [`docs/README.md`](docs/README.md) | its paths resolve; the README-heading check exempts it, because it is the index of `docs/`, not a front page |
 | [`docs/tutorial.md`](docs/tutorial.md) | every `rust` fence is a doctest in `docs-test/`, mounted by `docs-test/src/lib.rs` |
-| [`docs/hardware.md`](docs/hardware.md) | its paths resolve; the boot log it quotes is what the firmware prints |
+| [`docs/hardware.md`](docs/hardware.md) | its paths resolve; the boot log it quotes is checked by hand on a board, since no stage reads a `text` fence |
 | [`docs/contributing.md`](docs/contributing.md) | every path and command it gives resolves; the umbrella command is `xpui-dev`'s |
 | `AGENTS.md` | the stage list above is compared to what the gate runs, in both modes |
 | every `///` and `//!` | `rustdoc links resolve`, and the two comment checks |
