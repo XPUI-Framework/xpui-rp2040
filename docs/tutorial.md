@@ -165,7 +165,7 @@ colour hardware is a matter of choosing which two.
 On a device you own the loop. It is short, and every line of it is there for a
 reason that costs you if you drop it:
 
-```text
+```rust
 while app.is_running() {
     backend.begin_frame(now_millis());   // advance the clock, clear input edges
     buttons.poll(backend);               // your GPIO -> logical buttons
