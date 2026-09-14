@@ -25,7 +25,7 @@ gate live in workspaces of their own.
 ```
 
 ```text
-format · file sizes · crates are tested · READMEs warn · prose is compiled · documented paths resolve · rustdoc links resolve · documented commands resolve · lint · the prose compiles · the gate's own tests · the nested clippy configs agree · README sections · AGENTS.md · published crates deny missing_docs · comment blocks · comment narration
+format · file sizes · crates are tested · READMEs warn · prose is compiled · documented paths resolve · rustdoc links resolve · the reference mirrors rustdoc · documented commands resolve · lint · the prose compiles · the gate's own tests · the nested clippy configs agree · README sections · AGENTS.md · published crates deny missing_docs · comment blocks · comment narration
 + both firmware images link
 ```
 
@@ -46,6 +46,9 @@ before pushing anything the linker could reject.
 - **`the prose compiles`** — `docs-test/`'s doctests, run for the host
   triple, because the firmware crate cannot run a doctest on a laptop.
   `xpui-esp32` has a stage of the same name; the host triple is this one's.
+- **`the reference mirrors rustdoc`** reads the board's rustdoc, under
+  `target/thumbv6m-none-eabi/doc/xpui_rp2040`: a host run documents nothing
+  here. With no output there it fails rather than skips.
 - **`published crates deny missing_docs`** runs in every repository; what is
   particular here is its answer, `no publishable crates`, which is permanent.
   `#![deny(missing_docs)]` is on anyway.
@@ -77,8 +80,9 @@ before pushing anything the linker could reject.
 |---|---|
 | [`README.md`](README.md), [`docs-test/README.md`](docs-test/README.md) | their paths and commands resolve; neither carries a `rust` fence |
 | [`docs/README.md`](docs/README.md) | its paths resolve; the README-heading check exempts it, because it is the index of `docs/`, not a front page |
-| [`docs/tutorial.md`](docs/tutorial.md) | every `rust` fence is a doctest in `docs-test/`, mounted by `docs-test/src/lib.rs` |
-| [`docs/hardware.md`](docs/hardware.md) | its paths resolve; the boot log it quotes is checked by hand on a board, since no stage reads a `text` fence |
+| [`docs/tutorial.md`](docs/tutorial.md) | every `rust` fence is a doctest in `docs-test/`, mounted by `docs-test/src/lib.rs`; the boot log it quotes is checked by hand on a board, since no stage reads a `text` fence |
+| [`docs/reference.md`](docs/reference.md) | `the reference mirrors rustdoc`, against the board's rustdoc; every `rust` fence is a doctest in `docs-test/`, mounted by `docs-test/src/lib.rs` |
+| [`docs/hardware.md`](docs/hardware.md) | its paths resolve; its measurements are taken by hand from a release ELF, since no stage recomputes them |
 | [`docs/contributing.md`](docs/contributing.md) | every path and command it gives resolves; the umbrella command is `xpui-dev`'s |
 | `AGENTS.md` | the stage list above is compared to what the gate runs, in both modes |
 | every `///` and `//!` | `rustdoc links resolve`, and the two comment checks |

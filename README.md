@@ -40,7 +40,7 @@ still build for your laptop.
 
 The ELF lands in `target/thumbv6m-none-eabi/release/`. This crate
 is its own workspace, so it has a `target/` of its own — see
-[its own workspace](docs/hardware.md#its-own-workspace).
+[its own workspace](docs/contributing.md#its-own-workspace).
 
 **Flash over USB, no probe.** Install the tool first — it is a compile, and
 the board should not be sitting in bootloader mode while it runs:

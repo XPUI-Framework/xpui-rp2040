@@ -37,10 +37,11 @@ pub fn heap_used() -> (usize, usize) {
     (HEAP.used(), HEAP.free())
 }
 
-/// Hands the allocator its memory. Call once, before anything allocates.
+/// Hands the allocator its memory.
 ///
-/// [`xpui::App::new`] allocates on its first line, so this is the first line
-/// of every binary here.
+/// Call it once, before anything allocates. [`xpui::App::new`] allocates on
+/// its first line, so every binary here calls this second, straight after
+/// [`init_log`].
 pub fn init_heap() {
     static mut HEAP_MEMORY: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
     // Safety: `HEAP_MEMORY` is a static of exactly `HEAP_SIZE` bytes, and this

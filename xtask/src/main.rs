@@ -15,7 +15,7 @@
 //! Each repository in the organisation has its own copy of this shape, holding
 //! its own list. **This file is the part that is meant to differ**; the modules
 //! under it are byte-identical, and `shared_files_agree` in `xpui-dev` hashes
-//! all ten across the nine, so a fix to the fence scanner cannot land in one
+//! all thirteen across the nine, so a fix to the fence scanner cannot land in one
 //! repository and not the rest.
 //!
 //! A check written and never listed below is a dead function, which clippy
@@ -28,9 +28,12 @@ mod comments;
 mod docs;
 mod faults;
 mod fences;
+mod pages;
 mod paths;
 mod prose;
 mod readme;
+mod reference;
+mod rustdoc;
 mod tree;
 mod workspaces;
 
@@ -52,7 +55,7 @@ const UNTESTED: [(&str, &str); 2] = [
     ),
     (
         "docs-test",
-        "a doctest mount; its only content is this repository's tutorial",
+        "a doctest mount; its only content is this repository's tutorial and reference",
     ),
 ];
 
@@ -109,6 +112,18 @@ const NARRATION_CHECKED: bool = true;
 /// Which files the two comment checks read. `None` is every tracked source,
 /// manifest and C++ file outside `tests/`.
 const COMMENT_SCOPE: Option<&str> = None;
+
+/// Where the reference pages are, and how far they mirror rustdoc. `None` is
+/// not adopted.
+///
+/// The board's rustdoc, because only a board run documents this crate. No
+/// output there fails the stage rather than skipping it.
+const REFERENCE: Option<reference::Reference> = Some(reference::Reference {
+    crates: &["target/thumbv6m-none-eabi/doc/xpui_rp2040"],
+    pages: "docs/reference.md",
+    complete: true,
+    exempt: &[],
+});
 
 /// The one bare-metal target, and it is required. There is no host build here
 /// to fall back on: an RP2040 HAL does not compile for a laptop, so this lint
@@ -169,6 +184,10 @@ fn main() -> ExitCode {
         ),
         ("documented paths resolve", Box::new(docs::doc_paths)),
         ("rustdoc links resolve", Box::new(workspaces::rustdoc_links)),
+        (
+            "the reference mirrors rustdoc",
+            Box::new(|| reference::mirrors_rustdoc(REFERENCE.as_ref())),
+        ),
         (
             "documented commands resolve",
             Box::new(|| commands::resolve(&cargo::packages(), &[])),

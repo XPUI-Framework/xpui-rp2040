@@ -165,7 +165,7 @@ colour hardware is a matter of choosing which two.
 On a device you own the loop. It is short, and every line of it is there for a
 reason that costs you if you drop it:
 
-```rust
+```text
 while app.is_running() {
     backend.begin_frame(now_millis());   // advance the clock, clear input edges
     buttons.poll(backend);               // your GPIO -> logical buttons
@@ -258,31 +258,65 @@ is one `cargo install` each, in [the README](../README.md#using-it).
 
 ## What has been proven, and where
 
-Both boards here have been run over a debug probe. The firmware says what it
-found on the way up — board size against panel size, what each key resolved to,
-and the heap after the first frame — because a driver a quarter turn out lays
-out plausibly and puts the screen in a corner of the glass, and a key looked up
-under a name the board does not carry is otherwise simply silent.
+**Both boards here have been run**, over a debug probe, and the firmware says
+what it finds on the way up:
+
+```text
+xpui: Badger 2040 296x128, panel 296x128
+xpui: key a sends Some(Back)
+xpui: key b sends Some(Confirm)
+xpui: key c sends None
+xpui: key Up sends Some(Up)
+xpui: key Dn sends Some(Down)
+xpui: first frame up, heap 5308 of 65536 used
+```
+
+A mismatch between the first two sizes is a driver configured a quarter turn
+out, which lays out plausibly and puts the screen in a corner of the glass. It
+costs one line to say so and an afternoon to find otherwise.
+
+The five key lines are the same idea: each is what the board answered for a
+name this firmware wires. They catch a name it does not carry — that key
+resolves to `None` and is silent — and they cannot catch a pin behind the wrong
+name, which is what pressing all five is for. Both boards have been pressed
+through all five, and `a` and `b` were checked as the pair most worth getting
+backwards.
+
+`cargo run --release --bin badger2040` shows it, with no extra flag — which is
+what [the release profile](hardware.md#the-release-profile) keeping the symbol
+table buys.
+
+**The heap figure is measured, not reasoned** — 5,308 bytes on the Badger and
+592 on the Tufty, of 65,536. One sample, of the root menu at boot: it says the
+reservation in `src/runtime.rs` is generous, not that it is generous under every
+screen. A screen that buffers an image has not been tried.
 
 Three faults came out of that first run, and each is worth knowing before you
 meet it on your own board:
 
 - **A slow panel makes auto-repeat lie.** The loop is blind for the ~800 ms a
-  refresh takes, and the button still reads as down on the frame after. The
-  framework no longer credits a gap it could not see through — but if you write
-  your own loop, that is the trap.
+  refresh takes, and the button still reads as down on the frame after, so one
+  tap of Down walked the selection several rows. The framework no longer
+  credits a gap it could not see through — but if you write your own loop, that
+  is the trap.
 - **`Button::Back` on a root screen would end the app**, which on a device
   means the loop exits and the board parks. `App::keep_root()` is the opt-in
   that declines it — see [`src/frame.rs`](../src/frame.rs). Decline the *pop*,
   never the key: a screen may claim Back for itself and an open value cancels
   with it, and a loop that drops the key at the pin takes both away.
 - **`mipidsi` shortens a run of one colour into a bare strobe loop** that
-  outruns an ST7789 over a parallel bus, and any pixel whose two bytes match
-  takes that path — 256 of them, ink and background among them. `PacedFill` in
-  `xpui-embedded-graphics` is the wrapper that avoids it, and
-  the whole story is in its module docs.
+  outruns an ST7789 over a parallel bus — a write strobe of about 30 ns against
+  a 66 ns minimum — and any pixel whose two bytes match takes that path: 256 of
+  them, ink and background among them. Fills came out as noise while text
+  stayed crisp. `PacedFill` in `xpui-embedded-graphics` is the wrapper that
+  avoids it, and the whole story is in its module docs.
 
-What has *not* been tried is battery operation: both boards have only been run
-over USB, where the Badger's GP10 holds up a rail the USB supply is feeding
-anyway. See [the pin tables](hardware.md#pins) for what every pin on
-both boards does.
+Two things a probe cannot reach, for whoever gets there next:
+
+- **Battery operation.** Both boards have been run over USB only, so the
+  Badger's GP10 3V3 enable — [the pin that *is* the rail](hardware.md#pins) on
+  battery — has never been exercised where it matters.
+- **Anything about the Tufty's colour rendering** beyond ink and background.
+  The framework paints in two colours and the panel does 65,536.
+
+[The pin tables](hardware.md#pins) say what every pin on both boards does.

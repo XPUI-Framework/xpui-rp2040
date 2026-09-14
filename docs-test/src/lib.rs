@@ -1,6 +1,7 @@
 //! Nothing but a home for the tutorial's doctests.
 //!
-//! `../docs/tutorial.md`'s snippets are compiled and run from here, because
+//! `../docs/tutorial.md`'s and `../docs/reference.md`'s snippets are compiled
+//! and run from here, because
 //! the firmware they teach cannot compile anything on a laptop: every item in
 //! it is bare metal, and rustdoc runs snippets on the host.
 //!
@@ -22,3 +23,7 @@
 #[cfg(doctest)]
 #[doc = include_str!("../../docs/tutorial.md")]
 mod tutorial {}
+
+#[cfg(doctest)]
+#[doc = include_str!("../../docs/reference.md")]
+mod reference {}

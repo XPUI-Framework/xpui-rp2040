@@ -32,12 +32,14 @@ pub struct ButtonPins {
     pub b: Input<'static>,
     /// The switch printed `c`, rightmost along the bottom edge.
     pub c: Input<'static>,
-    /// The upper of the two switches on the right edge. The bezel labels it
-    /// `Up`.
+    /// The upper of the two switches on the right edge.
+    ///
+    /// The bezel labels it `Up`.
     pub up: Input<'static>,
-    /// The lower of the two switches on the right edge. The bezel labels it
-    /// **`Dn`**, not `Down`: the label is what resolves the pin, and spelling
-    /// it out leaves that switch dead on hardware.
+    /// The lower of the two switches on the right edge.
+    ///
+    /// The bezel labels it **`Dn`**, not `Down`: the label is what resolves the
+    /// pin, and spelling it out leaves that switch dead on hardware.
     pub down: Input<'static>,
 }
 
