@@ -38,7 +38,7 @@ Give `c` a job by editing that file — the entry in `BADGE_FOOTER`, its twin in
 untouched. Both badges share that footer, so both gain the key.
 
 Each key says what it resolved to on the way up, so a name the board does not
-carry — the Inky Frame's are `A` to `E` — shows as `None` beside the name
+carry — the [Inky Frame](https://shop.pimoroni.com/products/inky-frame-5-7)'s are `A` to `E` — shows as `None` beside the name
 that produced it rather than as a switch that feels broken. What no line can
 show is a pin behind the wrong name: both sides agree, and only a thumb on the
 board disagrees.
@@ -67,7 +67,7 @@ quickest waveform that leaves text crisp, and the loop only repaints when
 ## Memory
 
 `memory.x` declares 2 MiB of flash — what a Badger has; a Tufty has 8 MiB and
-is happy with less being claimed — and the RP2040's 256 KiB striped RAM bank.
+is happy with less being claimed — and the [RP2040](https://www.raspberrypi.com/products/rp2040/)'s 256 KiB striped RAM bank.
 
 The heap is 64 KiB, handed over by [`init_heap`](reference.md#init_heap), with
 the reasoning written next to it in `src/runtime.rs`.
@@ -81,7 +81,7 @@ of a release build is:
 | `badger2040` | 225 KiB of 2 MiB | 94 KiB of 256 KiB |
 | `tufty2040` | 230 KiB of 8 MiB | 66 KiB of 256 KiB |
 
-Of the Badger's 94 KiB, 64 KiB is the heap and **28 KiB is the embassy task
+Of the Badger's 94 KiB, 64 KiB is the heap and **28 KiB is the [embassy](https://embassy.dev/) task
 pool** — a `static` sized from the frame loop's future, which holds the panel
 driver by value while `run` hands it on. The Tufty's is 624 bytes. On the
 Badger that pool is the largest thing after the heap and the first place to
@@ -107,17 +107,17 @@ file on disk — an ELF carries debug information the board never sees. Flash is
 
 ## Pins
 
-Taken from Pimoroni's own board headers, not guessed. The key names are the
+Taken from [Pimoroni](https://shop.pimoroni.com/)'s own board headers, not guessed. The key names are the
 board's, because [`run`](reference.md#run) looks each one up by exactly that
 string; [`ButtonPins`](reference.md#buttonpins) is which field carries which.
 
-**Badger 2040** — buttons `Dn` GP11, `a` GP12, `b` GP13, `c` GP14, `Up` GP15;
+**[Badger 2040](https://shop.pimoroni.com/products/badger-2040)** — buttons `Dn` GP11, `a` GP12, `b` GP13, `c` GP14, `Up` GP15;
 SPI0 clock GP18 and data GP19 (the panel never answers, so MISO is unused);
 panel chip select GP17, data/command GP20, reset GP21, busy GP26; 3V3 enable
 GP10, held high for as long as the firmware runs because on battery that pin
 *is* the rail.
 
-**Tufty 2040** — buttons `Dn` GP6, `a` GP7, `b` GP8, `c` GP9, `Up` GP22; panel
+**[Tufty 2040](https://shop.pimoroni.com/products/tufty-2040)** — buttons `Dn` GP6, `a` GP7, `b` GP8, `c` GP9, `Up` GP22; panel
 chip select GP10, data/command GP11, write GP12, read GP13; data bus DB0–DB7
 on GP14–GP21 in order; backlight GP2, raised only after the first clear so the
 controller's power-on noise is never lit. GP27 is the battery-sense reference
@@ -125,7 +125,7 @@ enable rather than a panel supply, and is left alone.
 
 ## The release profile
 
-`strip = "debuginfo"` rather than `true`. `probe-rs run` locates the RTT
+`strip = "debuginfo"` rather than `true`. [`probe-rs run`](https://probe.rs/) locates the [RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/)
 control block by looking its symbol up in the ELF, and `strip = true` deletes
 the whole symbol table, so the boot log never appears and the failure looks
 like a firmware that printed nothing. DWARF still goes.
@@ -142,9 +142,9 @@ never suspends. Keeping one loop rather than two that would drift costs
 machinery rather than the wrapper.
 
 Both boards go through the blocking one because neither has an async flush to
-wait on: `mipidsi` writes straight through, and `uc8151`'s published release
+wait on: [`mipidsi`](https://crates.io/crates/mipidsi) writes straight through, and [`uc8151`](https://crates.io/crates/uc8151)'s published release
 spins on the BUSY pin. Its `asynch` module exists on git and has never been
 published — the last release was 2023 — so moving the Badger to it would mean
-a git dependency and an `embedded-hal` 1.0 migration for a driver nobody has
+a git dependency and an [`embedded-hal`](https://crates.io/crates/embedded-hal) 1.0 migration for a driver nobody has
 cut a release of since. `run_async` is there for when that changes, and for
 any DMA-backed panel today.

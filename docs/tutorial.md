@@ -1,22 +1,22 @@
 # Your first screen on a board
 
-You have a Badger 2040 — 296×128 of monochrome e-ink, five buttons, 2 MiB of
+You have a [Badger 2040](https://shop.pimoroni.com/products/badger-2040) — 296×128 of monochrome e-ink, five buttons, 2 MiB of
 flash, no touchscreen. This puts a screen on it.
 
 It assumes you have written one for the simulator already;
 [the framework's tutorial](https://github.com/XPUI-Framework/xpui-framework/blob/main/docs/tutorial.md) is that, and
 nothing here repeats it. **What is different on a board is the subject.**
 
-Every Rust block below is a doctest in `docs-test/`, run for the host triple
+Every [Rust](https://rust-lang.org/) block below is a doctest in `docs-test/`, run for the host triple
 by the command in [its README](../docs-test/README.md#using-it); a bare
 `cargo test` builds for the board and compiles none of them. The device-only
-ones — an embassy entry point, a flash command — are fenced `text`, and each
+ones — an [embassy](https://embassy.dev/) entry point, a flash command — are fenced `text`, and each
 says why it cannot be compiled here.
 
 ## Nothing about the screen changes
 
 That is the whole claim, so it goes first. This is a complete screen, and the
-same source runs in the simulator window, on a Badger, on a Tufty and inside a
+same source runs in the simulator window, on a Badger, on a [Tufty](https://shop.pimoroni.com/products/tufty-2040) and inside a
 C++ firmware:
 
 ```rust
@@ -123,7 +123,7 @@ let backend = Backend::new(
 assert_eq!(backend.screen_size().width, 296);
 ```
 
-The gallery packages exactly that as `gallery::wire`, and both RP2040 binaries
+The gallery packages exactly that as `gallery::wire`, and both [RP2040](https://www.raspberrypi.com/products/rp2040/) binaries
 call it rather than repeating the block. Yours can too; write it out once if
 you would rather see it.
 
@@ -198,7 +198,7 @@ debounce window: four agreeing samples is 40 ms.
 **A suspending driver needs `loan_display`, not `with_display`.** The closure
 above holds the backend's state for as long as it runs, so a flush you have to
 `await` cannot go inside one. `frame.rs`'s `run_async` is the shape for that;
-the Badger does not need it, because the published `uc8151` blocks.
+the Badger does not need it, because the published [`uc8151`](https://crates.io/crates/uc8151) blocks.
 
 ## 4. What you have to fit in
 
@@ -253,7 +253,7 @@ can do.
 
 Run both from [this repository's root](../), whose `.cargo/config.toml` sets
 the target and the runner — so neither line needs `--target`, and `cargo run`
-reaches for a debug probe on its own. Installing `probe-rs` and `elf2uf2-rs`
+reaches for a debug probe on its own. Installing [`probe-rs`](https://probe.rs/) and [`elf2uf2-rs`](https://crates.io/crates/elf2uf2-rs)
 is one `cargo install` each, in [the README](../README.md#using-it).
 
 ## What has been proven, and where
@@ -304,7 +304,7 @@ meet it on your own board:
   that declines it — see [`src/frame.rs`](../src/frame.rs). Decline the *pop*,
   never the key: a screen may claim Back for itself and an open value cancels
   with it, and a loop that drops the key at the pin takes both away.
-- **`mipidsi` shortens a run of one colour into a bare strobe loop** that
+- **[`mipidsi`](https://crates.io/crates/mipidsi) shortens a run of one colour into a bare strobe loop** that
   outruns an ST7789 over a parallel bus — a write strobe of about 30 ns against
   a 66 ns minimum — and any pixel whose two bytes match takes that path: 256 of
   them, ink and background among them. Fills came out as noise while text

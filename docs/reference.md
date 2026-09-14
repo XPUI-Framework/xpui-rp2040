@@ -3,7 +3,7 @@
 Every public item in `xpui-rp2040`: the frame loop a binary hands its panel to,
 the pins it hands over with it, and the three calls that make a bare-metal
 board a place a screen can run. [The tutorial](tutorial.md) puts a first screen
-on a Badger with them; [hardware.md](hardware.md) is what each key, pin and
+on a [Badger](https://shop.pimoroni.com/products/badger-2040) with them; [hardware.md](hardware.md) is what each key, pin and
 kilobyte is for.
 
 Everything here compiles for `thumbv6m-none-eabi` and nothing else, so an
@@ -56,14 +56,14 @@ where
 |---|---|
 | `display` | The panel driver, any `DrawTarget`. It is wired into a backend with `gallery::wire` and leaked, so it lives as long as the board runs. Its size is what the screens lay out against, whatever `board` says. |
 | `board` | What the case is: `pimoroni::BADGER_2040` or `pimoroni::TUFTY_2040`. The chrome is sized from it, and each of `pins` is resolved against its keys. |
-| `palette` | Which colour is ink. `Palette::INK_IS_OFF` on the Badger, whose UC8151 draws `Off` as black; `Palette::new(Rgb565::BLACK, Rgb565::WHITE)` on the Tufty. The wrong one inverts every screen and reports nothing. |
+| `palette` | Which colour is ink. `Palette::INK_IS_OFF` on the Badger, whose UC8151 draws `Off` as black; `Palette::new(Rgb565::BLACK, Rgb565::WHITE)` on the [Tufty](https://shop.pimoroni.com/products/tufty-2040). The wrong one inverts every screen and reports nothing. |
 | `pins` | The five switches, as [`ButtonPins`](#buttonpins). |
 | `root` | The first screen, kept for the life of the loop: Back reaches it like any key, and never finishes it. |
 | `present` | Pushes the framebuffer to the glass. Called after the first paint and after every later one, and at no other time. |
 
 Every 10 ms the loop starts a frame on the board's clock, samples the switches,
 ticks the app, and paints only if the framework asked. On the way up it says
-what it found over RTT: the board's size against the panel's, what each key
+what it found over [RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/): the board's size against the panel's, what each key
 resolved to, and the heap after the first frame. The lines are in
 [the tutorial](tutorial.md#what-has-been-proven-and-where).
 
@@ -101,7 +101,7 @@ async fn main(_spawner: Spawner) {
 }
 ```
 
-Fenced `text`: an embassy entry point that owns the RP2040's peripherals, which
+Fenced `text`: an [embassy](https://embassy.dev/) entry point that owns the [RP2040](https://www.raspberrypi.com/products/rp2040/)'s peripherals, which
 compiles for the board and nowhere else.
 [`src/bin/badger2040.rs`](../src/bin/badger2040.rs) is all of it. The Tufty's
 panel draws straight through its parallel bus, so
@@ -140,8 +140,8 @@ seconds, and the loop sleeps through it rather than spinning.
 > happens; a firmware copying the loop into a two-task design meets it as a
 > dropped frame with no signal.
 
-Neither board needs it today: `mipidsi` writes straight through, and the
-published `uc8151` spins on the BUSY pin. It is here for a DMA-backed panel,
+Neither board needs it today: [`mipidsi`](https://crates.io/crates/mipidsi) writes straight through, and the
+published [`uc8151`](https://crates.io/crates/uc8151) spins on the BUSY pin. It is here for a DMA-backed panel,
 and for a driver with an async flush.
 
 **Example — a driver that awaits its flush**
@@ -262,7 +262,7 @@ message: the crate supplies the `#[panic_handler]`, which prints `PANIC:` and
 the message, then [`park`](#park)s.
 
 > [!NOTE]
-> `probe-rs` finds the channel by looking its symbol up in the ELF. The release
+> [`probe-rs`](https://probe.rs/) finds the channel by looking its symbol up in the ELF. The release
 > profile's `strip = "debuginfo"` keeps that symbol; `strip = true` deletes it,
 > and the board then seems to print nothing.
 > [The release profile](hardware.md#the-release-profile) says more.

@@ -12,7 +12,7 @@
 > notice. Use at your own risk.
 
 Two firmware binaries that flash [the gallery](https://github.com/XPUI-Framework/xpui-gallery/tree/main/gallery)
-to a Pimoroni board: the same screens the simulator runs, the same crate, and
+to a [Pimoroni](https://shop.pimoroni.com/) board: the same screens the simulator runs, the same crate, and
 no device-specific code in them at all. What differs between the two is a
 `Board`, a `Palette`, and which pin is wired to what; the frame loop, the
 button handling and the heap are shared.
@@ -69,7 +69,7 @@ cargo run --release --bin badger2040
 `.cargo/config.toml` points the runner at
 `probe-rs run --chip RP2040 --protocol swd`. This
 crate's release profile keeps the symbol table — see the note on it in
-`Cargo.toml` — so a probe session shows names, and the RTT log arrives without
+`Cargo.toml` — so a probe session shows names, and the [RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/) log arrives without
 any extra flag.
 
 ### The one warning you will see
@@ -80,7 +80,7 @@ version of Rust: proc-macro-error2 v2.0.1
 ```
 
 Not ours, and not fixable here. It arrives four levels down —
-`embassy-rp` → `pio` → `pio-proc` → `proc-macro-error2` — where that crate
+[`embassy-rp`](https://crates.io/crates/embassy-rp) → `pio` → [`pio-proc`](https://crates.io/crates/pio-proc) → [`proc-macro-error2`](https://crates.io/crates/proc-macro-error2) — where that crate
 re-exports `proc_macro` in a way
 [rust-lang/rust#127909](https://github.com/rust-lang/rust/issues/127909) is
 phasing out. 2.0.1 is the newest published version and still has it, so there is
@@ -100,8 +100,8 @@ thing to own than a warning.
   appear as a mass-storage device when you hold **BOOTSEL** while plugging them
   in.
 - Optional, for `cargo run` and a debugger: a
-  [Raspberry Pi Debug Probe](https://shop.pimoroni.com/products/raspberry-pi-debug-probe)
-  or a second Pico running picoprobe, wired to the SWD pads.
+  [Raspberry Pi Debug Probe](https://www.raspberrypi.com/products/debug-probe/)
+  or a second [Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) running [picoprobe](https://github.com/raspberrypi/debugprobe), wired to the SWD pads.
 - The target, which `rust-toolchain.toml` already lists:
 
   ```bash
@@ -115,7 +115,7 @@ thing to own than a warning.
 ./build-and-test.sh all      # the above, plus linking both firmware images
 ```
 
-The checks are in [`xtask/`](xtask/) — this repository's own list, in Rust,
+The checks are in [`xtask/`](xtask/) — this repository's own list, in [Rust](https://rust-lang.org/),
 holding nothing it does not run — and one command reaches all three of this
 repository's workspaces. How a change is reviewed is in
 [docs/contributing.md](docs/contributing.md).

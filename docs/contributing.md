@@ -3,7 +3,7 @@
 ## Building it
 
 `rust-toolchain.toml` pins the toolchain and `thumbv6m-none-eabi`, the only
-target this crate compiles for; `rustup` installs both on the first cargo
+target this crate compiles for; [`rustup`](https://rustup.rs/) installs both on the first cargo
 call. Every dependency on a sibling is fetched from its repository on `main`.
 
 ```bash
@@ -19,7 +19,7 @@ of their own rather than members of it. That is what makes the firmware
 ordinary code you can open and read.
 
 A member is built for the host by `cargo clippy --workspace` and `cargo test
---workspace`, and an RP2040 HAL does not compile for a laptop. The alternative
+--workspace`, and an [RP2040](https://www.raspberrypi.com/products/rp2040/) HAL does not compile for a laptop. The alternative
 is a `device` cfg every item sits behind, so that off the board the crate is
 empty — which also means no test can reach it and an editor shows nothing.
 Three mutations to the button mapping at once would pass every check in the
