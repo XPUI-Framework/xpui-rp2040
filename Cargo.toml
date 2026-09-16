@@ -89,7 +89,7 @@ rtt-target = "0.6"
 
 # The panels.
 uc8151 = "0.2.0"   # Badger 2040, monochrome e-ink over SPI
-mipidsi = "0.9.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
+mipidsi = "0.10.0"  # Tufty 2040, ST7789v over an 8-bit parallel bus
 
 # `strip = "debuginfo"` rather than `true`: `probe-rs run` finds the RTT
 # control block by its symbol, and `true` deletes the whole symbol table, so
