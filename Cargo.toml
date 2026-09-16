@@ -72,7 +72,7 @@ embedded-graphics = "0.8"
 
 # Embassy: the RP2040 HAL, a microsecond clock, and an executor to await on.
 embassy-executor = { version = "0.9.1", features = ["arch-cortex-m", "executor-thread"] }
-embassy-rp = { version = "0.8.0", features = ["critical-section-impl", "rp2040", "time-driver"] }
+embassy-rp = { version = "0.10.0", features = ["critical-section-impl", "rp2040", "time-driver"] }
 embassy-time = "0.5.1"
 
 cortex-m = "0.7.7"
